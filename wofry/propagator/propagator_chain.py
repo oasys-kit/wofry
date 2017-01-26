@@ -41,31 +41,7 @@ class Singleton:
 ###################################################################
 
 from syned.beamline.beamline import Beamline
-
 from wofry.propagator.wavefront import Wavefront
-
-
-@Singleton
-class PropagatorsChain(object):
-    def __init__(self):
-       self.__propagators_chain = []
-
-    def add_propagator(self, propagator=AbstractPropagator()):
-        if propagator is None: raise ValueError("Given propagator is None")
-        if not isinstance(propagator, AbstractPropagator): raise ValueError("Given propagator is not a compatibile object")
-
-        for existing in self.__propagators_chain:
-            if existing.is_handler(propagator.get_handler_name()):
-                raise ValueError("Propagator already in the Chain")
-
-        self.__propagators_chain.append(propagator)
-
-    def do_propagation(self, propagation_parameters, handler_name):
-        for propagator in self.__propagators_chain:
-            if propagator.is_handler(handler_name):
-                return propagator.do_propagation(parameters=propagation_parameters)
-
-        return None
 
 class PropagationHandlers:
     SRXRAYLIB = "SRXRAYLIB"
@@ -100,3 +76,27 @@ class AbstractPropagator(object):
         raise NotImplementedError("This method is abstract" +
                                   "\n\naccepts " + PropagationParameters.__module__ + "." + PropagationParameters.__name__ +
                                   "\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)
+
+
+@Singleton
+class PropagatorsChain(object):
+    def __init__(self):
+       self.__propagators_chain = []
+
+    def add_propagator(self, propagator=AbstractPropagator()):
+        if propagator is None: raise ValueError("Given propagator is None")
+        if not isinstance(propagator, AbstractPropagator): raise ValueError("Given propagator is not a compatibile object")
+
+        for existing in self.__propagators_chain:
+            if existing.is_handler(propagator.get_handler_name()):
+                raise ValueError("Propagator already in the Chain")
+
+        self.__propagators_chain.append(propagator)
+
+    def do_propagation(self, propagation_parameters, handler_name):
+        for propagator in self.__propagators_chain:
+            if propagator.is_handler(handler_name):
+                return propagator.do_propagation(parameters=propagation_parameters)
+
+        return None
+

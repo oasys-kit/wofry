@@ -1,12 +1,17 @@
 
-from syned.beamline.optical_element import OpticalElement
-
 from wofry.propagator.wavefront import Wavefront
 
-class WOOpticalElement(OpticalElement):
+class WOLightSourceDecorator():
 
-    def __init__(self, name, boundary_shape=None):
-        super().__init__(name, boundary_shape)
+    def get_wavefront(self):
+        raise NotImplementedError("This method should be specialized by specific implementors" +
+                                  "\n\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)
+
+
+class WOOpticalElementDecorator(object):
+
+    def __init__(self):
+        super().__init__()
 
     def applyOpticalElement(self, wavefront=Wavefront()):
         raise NotImplementedError("This method should be specialized by specific implementors" +
