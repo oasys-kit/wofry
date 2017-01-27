@@ -4,5 +4,6 @@ class WavefrontDecorator():
     def toGenericWavefront(self):
         pass
 
-    def fromGenericWavefront(self, wavefront):
+    @classmethod
+    def fromGenericWavefront(cls, wavefront):
         pass

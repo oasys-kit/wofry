@@ -1,6 +1,18 @@
 import unittest
 import numpy
 
+# TODO: REMOVE THIS!!!!
+try:
+    from srwlib import *
+    SRWLIB_AVAILABLE = True
+except:
+    try:
+        from wpg.srwlib import *
+        SRWLIB_AVAILABLE = True
+    except:
+        SRWLIB_AVAILABLE = False
+        print("SRW is not available")
+
 from syned.beamline.optical_elements.shape import Rectangle, Ellipse
 from syned.beamline.element_coordinates import ElementCoordinates
 from syned.beamline.beamline_element import BeamlineElement
@@ -21,7 +33,7 @@ if do_plot:
 
 
 from wofry.propagator.propagators2D.fraunhofer import Fraunhofer2D
-from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D
+from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D, FresnelSRW
 from wofry.propagator.propagators2D.integral import Integral2D
 from wofry.propagator.propagators2D import initialize_default_propagator_2D
 
@@ -327,6 +339,9 @@ class propagator2DTest(unittest.TestCase):
             propagation_parameters.set_additional_parameters("shuffle_interval", 0)
             propagation_parameters.set_additional_parameters("calculate_grid_only", 1)
             wf1 = propagator.do_propagation(propagation_parameters, Integral2D.HANDLER_NAME)
+        elif method == 'srw':
+            propagation_parameters.set_additional_parameters("srw_autosetting", 0)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelSRW.HANDLER_NAME)
         else:
             raise Exception("Not implemented method: %s"%method)
 
@@ -560,6 +575,19 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
+    def test_propagate_2D_fresnel_srw_square(self):
+
+        if not SRWLIB_AVAILABLE:
+            print("SRW not available, skipping test_propagate_2D_fresnel_srw_square")
+            return
+
+        xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='srw',aperture_type='square',
+                                aperture_diameter=40e-6,
+                                #pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
+                                pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=1024/2,npixels_y=1024/4,
+                                propagation_distance=30.0,wavelength=1.24e-10)
+
+        numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
     def test_propagate_2D_fresnel_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='fft',aperture_type='square',
