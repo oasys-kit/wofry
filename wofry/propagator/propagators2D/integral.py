@@ -2,12 +2,12 @@
 
 import numpy
 
-from wofry.propagator.wavefront import GenericWavefront2D
-from wofry.propagator.propagator import Generic2DPropagator
+from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
+from wofry.propagator.propagator import Propagator2D
 
 # TODO: check resulting amplitude normalization (fft and srw likely agree, convolution gives too high amplitudes, so needs normalization)
 
-class Integral2D(Generic2DPropagator):
+class Integral2D(Propagator2D):
 
     HANDLER_NAME = "INTEGRAL_2D"
 

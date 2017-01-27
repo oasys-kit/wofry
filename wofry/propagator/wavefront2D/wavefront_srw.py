@@ -14,7 +14,7 @@ import numpy
 import scipy.constants as codata
 angstroms_to_eV = codata.h*codata.c/codata.e*1e10
 
-from wofry.propagator.wavefront import GenericWavefront2D
+from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 from wofry.propagator.decorators import WavefrontDecorator
 
 class WOSRWWavefront(SRWLWfr, WavefrontDecorator):

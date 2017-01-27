@@ -6,10 +6,10 @@
 
 import numpy
 
-from wofry.propagator.wavefront import GenericWavefront2D
-from wofry.propagator.propagator import Generic2DPropagator
+from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
+from wofry.propagator.propagator import Propagator2D
 
-class Fraunhofer2D(Generic2DPropagator):
+class Fraunhofer2D(Propagator2D):
 
     HANDLER_NAME = "FRAUNHOFER_2D"
 

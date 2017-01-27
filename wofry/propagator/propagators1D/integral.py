@@ -1,10 +1,10 @@
 import numpy
 
 from srxraylib.util.data_structures import ScaledArray
-from wofry.propagator.wavefront import GenericWavefront1D
-from wofry.propagator.propagator import Generic1DPropagator, PropagationParameters, PropagationElements
+from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
+from wofry.propagator.propagator import Propagator1D
 
-class Integral1D(Generic1DPropagator):
+class Integral1D(Propagator1D):
 
     HANDLER_NAME = "INTEGRAL_1D"
 

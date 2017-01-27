@@ -43,7 +43,9 @@ class Singleton:
 
 from syned.beamline.beamline_element import BeamlineElement
 
-from wofry.propagator.wavefront  import GenericWavefront, GenericWavefront1D, GenericWavefront2D, WavefrontDimension
+from wofry.propagator.wavefront  import Wavefront, WavefrontDimension
+from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
+from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 
 class PropagationElements(object):
     def __init__(self):
@@ -71,7 +73,7 @@ class PropagationElements(object):
 
 class PropagationParameters(object):
     def __init__(self,
-                 wavefront = GenericWavefront(),
+                 wavefront = Wavefront(),
                  propagation_elements = PropagationElements()):
         self._wavefront = wavefront
         self._propagation_elements = propagation_elements
@@ -112,7 +114,7 @@ class AbstractPropagator(object):
     def do_propagation(self, parameters=PropagationParameters()):
         raise NotImplementedError("This method is abstract" +
                                   "\n\naccepts " + PropagationParameters.__module__ + "." + PropagationParameters.__name__ +
-                                  "\nreturns " + GenericWavefront.__module__ + "." + GenericWavefront.__name__)
+                                  "\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)
 
 
 @Singleton
@@ -151,7 +153,7 @@ class PropagationManager(object):
 
 # ---------------------------------------------------------------
 
-class GenericPropagator(AbstractPropagator):
+class Propagator(AbstractPropagator):
 
     def do_propagation(self, parameters=PropagationParameters()):
         wavefront = parameters.get_wavefront()
@@ -169,7 +171,7 @@ class GenericPropagator(AbstractPropagator):
         raise NotImplementedError("This method is abstract")
 
 
-class Generic1DPropagator(GenericPropagator):
+class Propagator1D(Propagator):
 
     def get_dimension(self):
         return WavefrontDimension.ONE
@@ -180,7 +182,7 @@ class Generic1DPropagator(GenericPropagator):
 
         return super().do_propagation(parameters)
 
-class Generic2DPropagator(GenericPropagator):
+class Propagator2D(Propagator):
 
     def get_dimension(self):
         return WavefrontDimension.TWO

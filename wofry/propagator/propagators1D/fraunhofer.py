@@ -1,10 +1,10 @@
 
 import numpy
 
-from wofry.propagator.wavefront import GenericWavefront1D
-from wofry.propagator.propagator import Generic1DPropagator, PropagationParameters, PropagationElements
+from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
+from wofry.propagator.propagator import Propagator1D, PropagationParameters, PropagationElements
 
-class Fraunhofer1D(Generic1DPropagator):
+class Fraunhofer1D(Propagator1D):
 
     HANDLER_NAME = "FRAUNHOFER_1D"
 

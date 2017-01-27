@@ -35,10 +35,10 @@ import numpy
 import scipy.constants as codata
 angstroms_to_eV = codata.h*codata.c/codata.e*1e10
 
-from wofry.propagator.wavefront import GenericWavefront2D
-from wofry.propagator.propagator import Generic2DPropagator
+from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
+from wofry.propagator.propagator import Propagator2D
 
-class Fresnel2D(Generic2DPropagator):
+class Fresnel2D(Propagator2D):
 
     HANDLER_NAME = "FRESNEL_2D"
 
@@ -102,7 +102,7 @@ class Fresnel2D(Generic2DPropagator):
                                                                             wavelength=wavelength)
         return wf_propagated
 
-class FresnelConvolution2D(Generic2DPropagator):
+class FresnelConvolution2D(Propagator2D):
 
     HANDLER_NAME = "FRESNEL_CONVOLUTION_2D"
 
@@ -150,7 +150,7 @@ class FresnelConvolution2D(Generic2DPropagator):
 
 from wofry.propagator.wavefront2D.wavefront_srw import WOSRWWavefront
 
-class FresnelSRW(Generic2DPropagator):
+class FresnelSRW(Propagator2D):
 
     HANDLER_NAME = "FRESNEL_SRW"
 

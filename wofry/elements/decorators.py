@@ -1,11 +1,11 @@
 
-from wofry.propagator.wavefront import GenericWavefront
+from wofry.propagator.wavefront import Wavefront
 
 class WOLightSourceDecorator():
 
     def get_wavefront(self):
         raise NotImplementedError("This method should be specialized by specific implementors" +
-                                  "\n\nreturns " + GenericWavefront.__module__ + "." + GenericWavefront.__name__)
+                                  "\n\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)
 
 
 class WOOpticalElementDecorator(object):
@@ -13,7 +13,7 @@ class WOOpticalElementDecorator(object):
     def __init__(self):
         super().__init__()
 
-    def applyOpticalElement(self, wavefront=GenericWavefront()):
+    def applyOpticalElement(self, wavefront=Wavefront()):
         raise NotImplementedError("This method should be specialized by specific implementors" +
-                                  "\n\naccepts " + GenericWavefront.__module__ + "." + GenericWavefront.__name__ +
-                                  "\nreturns " + GenericWavefront.__module__ + "." + GenericWavefront.__name__)
+                                  "\n\naccepts " + Wavefront.__module__ + "." + Wavefront.__name__ +
+                                  "\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)

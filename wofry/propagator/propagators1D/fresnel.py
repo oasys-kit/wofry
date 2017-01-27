@@ -1,10 +1,10 @@
 import numpy
 
 from srxraylib.util.data_structures import ScaledArray
-from wofry.propagator.wavefront import GenericWavefront1D
-from wofry.propagator.propagator import Generic1DPropagator
+from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
+from wofry.propagator.propagator import Propagator1D
 
-class Fresnel1D(Generic1DPropagator):
+class Fresnel1D(Propagator1D):
 
     HANDLER_NAME = "FRESNEL_1D"
 
@@ -26,7 +26,7 @@ class Fresnel1D(Generic1DPropagator):
 
         return GenericWavefront1D(wavefront.get_wavelength(), ScaledArray.initialize_from_steps(ifft, wavefront.offset(), wavefront.delta()))
 
-class FresnelConvolution1D(Generic1DPropagator):
+class FresnelConvolution1D(Propagator1D):
 
     HANDLER_NAME = "FRESNEL_CONVOLUTION_1D"
 
