@@ -1,13 +1,15 @@
 import numpy
 
 from srxraylib.util.data_structures import ScaledArray
-from wofry.propagator.generic_wavefront import GenericWavefront1D
+from wofry.propagator.wavefront import GenericWavefront1D
 from wofry.propagator.propagator import Generic1DPropagator
 
 class Fresnel1D(Generic1DPropagator):
 
+    HANDLER_NAME = "FRESNEL_1D"
+
     def get_handler_name(self):
-        return "FRESNEL_1D"
+        return self.HANDLER_NAME
 
     """
     1D Fresnel propagator using convolution via Fourier transform
@@ -16,7 +18,6 @@ class Fresnel1D(Generic1DPropagator):
     :return: a new 1D wavefront object with propagated wavefront
     """
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
-
         fft_scale = numpy.fft.fftfreq(wavefront.size())/wavefront.delta()
 
         fft = numpy.fft.fft(wavefront.get_complex_amplitude())
@@ -27,8 +28,10 @@ class Fresnel1D(Generic1DPropagator):
 
 class FresnelConvolution1D(Generic1DPropagator):
 
+    HANDLER_NAME = "FRESNEL_CONVOLUTION_1D"
+
     def get_handler_name(self):
-        return "FRESNEL_CONVOLUTION_1D"
+        return self.HANDLER_NAME
 
     """
     1D Fresnel propagator using direct convolution

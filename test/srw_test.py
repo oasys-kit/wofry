@@ -2,7 +2,7 @@
 
 import wpg.srwlib as srw
 
-from wofry.propagator.generic_wavefront import GenericWavefront1D, GenericWavefront2D, WavefrontDimension
+from wofry.propagator.wavefront import GenericWavefront1D, GenericWavefront2D, WavefrontDimension
 from wofry.propagator.decorators import WavefrontDecorator
 from wofry.propagator.propagator import AbstractPropagator, PropagationParameters
 

@@ -1,4 +1,6 @@
 
+import numpy
+
 from syned.beamline.optical_elements.absorbers.slit import Slit
 from syned.beamline.optical_elements.shape import BoundaryShape, Rectangle, Ellipse
 
@@ -18,6 +20,22 @@ class WOSlit(Slit, WOOpticalElementDecorator):
 
         return wavefront
 
+class WOGaussianSlit(Slit, WOOpticalElementDecorator):
+    def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
+        Slit.__init__(self, name=name, boundary_shape=boundary_shape)
+
+    def applyOpticalElement(self, wavefront):
+        boundaries = self._boundary_shape.get_boundaries()
+        aperture_diameter_x =  numpy.abs(boundaries[1] - boundaries[0])
+        aperture_diameter_y =  numpy.abs(boundaries[2] - boundaries[3])
+        X = wavefront.get_mesh_x()
+        Y = wavefront.get_mesh_y()
+
+        wavefront.rescale_amplitudes(numpy.exp(- (((X*X)/2/(aperture_diameter_x/2.35)**2) + \
+                                                  ((Y*Y)/2/(aperture_diameter_y/2.35)**2) )))
+
+        return wavefront
+
 class WOSlit1D(Slit, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
@@ -32,3 +50,16 @@ class WOSlit1D(Slit, WOOpticalElementDecorator):
 
         return wavefront
 
+class WOGaussianSlit1D(Slit, WOOpticalElementDecorator):
+    def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
+        Slit.__init__(self, name=name, boundary_shape=boundary_shape)
+
+    def applyOpticalElement(self, wavefront):
+        boundaries = self._boundary_shape.get_boundaries()
+        aperture_diameter =  numpy.abs(boundaries[1] - boundaries[0])
+        X = wavefront.get_abscissas()
+
+        window = numpy.exp(-(X*X)/2/(aperture_diameter/2.35)**2)
+        wavefront.rescale_amplitudes(window)
+
+        return wavefront

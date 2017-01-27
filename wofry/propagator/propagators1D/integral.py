@@ -1,25 +1,15 @@
 import numpy
 
 from srxraylib.util.data_structures import ScaledArray
-from wofry.propagator.generic_wavefront import GenericWavefront1D
+from wofry.propagator.wavefront import GenericWavefront1D
 from wofry.propagator.propagator import Generic1DPropagator, PropagationParameters, PropagationElements
-
-class Integral1DPropagationParameters(PropagationParameters):
-    def __init__(self,
-                 wavefront = GenericWavefront1D(),
-                 propagation_elements = PropagationElements(),
-                 detector_abscissas=[None]):
-        PropagationParameters.__init__(wavefront, propagation_elements)
-
-        self._detector_abscissas=detector_abscissas
-
-    def detector_abscissas(self):
-        return self._detector_abscissas
 
 class Integral1D(Generic1DPropagator):
 
+    HANDLER_NAME = "INTEGRAL_1D"
+
     def get_handler_name(self):
-        return "INTEGRAL_1D"
+        return self.HANDLER_NAME
 
     """
     1D Fresnel-Kirchhoff propagator via simplified integral
@@ -30,11 +20,10 @@ class Integral1D(Generic1DPropagator):
     :return: a new 1D wavefront object with propagated wavefront
     """
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
-        if not isinstance(parameters, Integral1DPropagationParameters):
-            raise ValueError("parameters are not " + Integral1DPropagationParameters.__name__)
-
-        detector_abscissas = parameters.get_detector_abscissas()
-
+        if not parameters.has_additional_parameter("detector_abscissas"):
+            detector_abscissas = [None]
+        else:
+            detector_abscissas = parameters.get_additional_parameter("detector_abscissas")
 
         if detector_abscissas[0] == None:
             detector_abscissas = wavefront.get_abscissas()

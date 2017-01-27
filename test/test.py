@@ -10,7 +10,7 @@ from syned.beamline.optical_elements.shape import Rectangle, Ellipsoid
 
 from wofry.elements.decorators import WOLightSourceDecorator, WOOpticalElementDecorator
 from wofry.propagator.decorators import WavefrontDecorator
-from wofry.propagator.generic_wavefront import GenericWavefront1D, GenericWavefront2D, WavefrontDimension
+from wofry.propagator.wavefront import GenericWavefront1D, GenericWavefront2D, WavefrontDimension
 from wofry.propagator.propagator import PropagationManager, AbstractPropagator, PropagationParameters, PropagationElements
 
 # ----------------------------------------------

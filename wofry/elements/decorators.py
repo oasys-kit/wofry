@@ -1,5 +1,5 @@
 
-from wofry.propagator.generic_wavefront import GenericWavefront
+from wofry.propagator.wavefront import GenericWavefront
 
 class WOLightSourceDecorator():
 

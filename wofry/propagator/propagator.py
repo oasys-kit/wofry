@@ -40,11 +40,10 @@ class Singleton:
 # DO NOT TOUCH THIS CODE -- END
 ###################################################################
 
-from syned.beamline.beamline import Beamline
-from syned.storage_ring.light_source import LightSource
+
 from syned.beamline.beamline_element import BeamlineElement
 
-from wofry.propagator.generic_wavefront  import GenericWavefront, GenericWavefront1D, GenericWavefront2D, WavefrontDimension
+from wofry.propagator.wavefront  import GenericWavefront, GenericWavefront1D, GenericWavefront2D, WavefrontDimension
 
 class PropagationElements(object):
     def __init__(self):
@@ -76,12 +75,25 @@ class PropagationParameters(object):
                  propagation_elements = PropagationElements()):
         self._wavefront = wavefront
         self._propagation_elements = propagation_elements
+        self._additional_parameters = None
 
     def get_wavefront(self):
         return self._wavefront
 
     def get_PropagationElements(self):
         return self._propagation_elements
+
+    def set_additional_parameters(self, key, value):
+        if self._additional_parameters is None:
+            self._additional_parameters = {key : value}
+        else:
+            self._additional_parameters[key] = value
+
+    def get_additional_parameter(self, key):
+        return self._additional_parameters[key]
+
+    def has_additional_parameter(self, key):
+        return key in self._additional_parameters
 
 class AbstractPropagator(object):
 
@@ -117,6 +129,8 @@ class PropagationManager(object):
 
         dimension = propagator.get_dimension()
 
+        print(dimension)
+
         if not (dimension == WavefrontDimension.ONE or dimension == WavefrontDimension.TWO):
             raise ValueError("Wrong propagator dimension")
 
@@ -137,17 +151,17 @@ class PropagationManager(object):
 
 # ---------------------------------------------------------------
 
-
 class GenericPropagator(AbstractPropagator):
+
     def do_propagation(self, parameters=PropagationParameters()):
         wavefront = parameters.get_wavefront()
 
         for element in parameters.get_PropagationElements().get_propagation_elements():
-            coordinates = element.get_get_coordinates()
+            coordinates = element.get_coordinates()
 
-            wavefront = self.do_specific_progation(wavefront, coordinates.p, parameters)
+            if coordinates.p() != 0.0: wavefront = self.do_specific_progation(wavefront, coordinates.p(), parameters)
             wavefront = element.get_optical_element().applyOpticalElement(wavefront)
-            wavefront = self.do_specific_progation(wavefront, coordinates.q, parameters)
+            if coordinates.q() != 0.0: wavefront = self.do_specific_progation(wavefront, coordinates.q(), parameters)
 
         return wavefront
 
@@ -156,8 +170,9 @@ class GenericPropagator(AbstractPropagator):
 
 
 class Generic1DPropagator(GenericPropagator):
+
     def get_dimension(self):
-        WavefrontDimension.ONE
+        return WavefrontDimension.ONE
 
     def do_propagation(self, parameters=PropagationParameters()):
         if not isinstance(parameters.get_wavefront(), GenericWavefront1D):
@@ -166,8 +181,9 @@ class Generic1DPropagator(GenericPropagator):
         return super().do_propagation(parameters)
 
 class Generic2DPropagator(GenericPropagator):
+
     def get_dimension(self):
-        WavefrontDimension.TWO
+        return WavefrontDimension.TWO
 
     def do_propagation(self, parameters=PropagationParameters()):
         if not isinstance(parameters.get_wavefront(), GenericWavefront2D):

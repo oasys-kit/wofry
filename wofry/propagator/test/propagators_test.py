@@ -1,27 +1,38 @@
 import unittest
 import numpy
 
-from srxraylib.waveoptics.wavefront import Wavefront1D
-from srxraylib.waveoptics.wavefront2D import Wavefront2D
+from syned.beamline.optical_elements.shape import Rectangle, Ellipse
+from syned.beamline.element_coordinates import ElementCoordinates
+from syned.beamline.beamline_element import BeamlineElement
 
-from srxraylib.waveoptics.propagator import propagate_1D_fraunhofer
-from srxraylib.waveoptics.propagator import propagate_1D_integral
-from srxraylib.waveoptics.propagator import propagate_1D_fresnel, propagate_1D_fresnel_convolution
-from srxraylib.waveoptics.propagator2D import propagate_2D_fraunhofer
-from srxraylib.waveoptics.propagator2D import propagate_2D_integral
-from srxraylib.waveoptics.propagator2D import propagate_2D_fresnel, propagate_2D_fresnel_convolution, propagate_2D_fresnel_srw
+from wofry.propagator.propagator import PropagationElements
+
+from wofry.propagator.wavefront import GenericWavefront1D, GenericWavefront2D
+from wofry.propagator.propagator import PropagationManager, PropagationParameters
+
+from wofry.elements.optical_elements.absorbers.slit import WOSlit, WOSlit1D, WOGaussianSlit, WOGaussianSlit1D
+from wofry.elements.optical_elements.ideal_elements.screen import WOScreen
+from wofry.elements.optical_elements.ideal_elements.lens import WOIdealLens
 
 do_plot = True
 
 if do_plot:
     from srxraylib.plot.gol import plot,plot_image,plot_table
 
-try:
-    import srwlib
-    SRWLIB_AVAILABLE = True
-except:
-    SRWLIB_AVAILABLE = False
-    print("SRW is not available")
+
+from wofry.propagator.propagators2D.fraunhofer import Fraunhofer2D
+from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D
+from wofry.propagator.propagators2D.integral import Integral2D
+from wofry.propagator.propagators2D import initialize_default_propagator_2D
+
+from wofry.propagator.propagators1D.fraunhofer import Fraunhofer1D
+from wofry.propagator.propagators1D.fresnel import Fresnel1D, FresnelConvolution1D
+from wofry.propagator.propagators1D.integral import Integral1D
+from wofry.propagator.propagators1D import initialize_default_propagator_1D
+
+propagator = PropagationManager.Instance()
+initialize_default_propagator_2D()
+initialize_default_propagator_1D()
 
 #
 # some common tools
@@ -95,32 +106,42 @@ class propagatorTest(unittest.TestCase):
         print("# far field 1D (fraunhofer) diffraction from a %s aperture  "%aperture_type)
         print("#                                                            ")
 
-        wf = Wavefront1D.initialize_wavefront_from_range(x_min=-wavefront_length/2, x_max=wavefront_length/2,
+        wf = GenericWavefront1D.initialize_wavefront_from_range(x_min=-wavefront_length/2, x_max=wavefront_length/2,
                                                                 number_of_points=npoints,wavelength=wavelength)
 
         wf.set_plane_wave_from_complex_amplitude((2.0+1.0j)) # an arbitraty value
 
 
+        propagation_elements = PropagationElements()
+
+        slit = None
 
         if aperture_type == 'square':
-            wf.apply_slit(-aperture_diameter/2, aperture_diameter/2)
+            slit = WOSlit1D(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, 0, 0))
         elif aperture_type == 'gaussian':
-            X = wf.get_mesh_x()
-            Y = wf.get_mesh_y()
-            window = numpy.exp(- (X*X + Y*Y)/2/(aperture_diameter/2.35)**2)
-            wf.rescale_amplitudes(window)
+            slit = WOGaussianSlit1D(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, 0, 0))
         else:
             raise Exception("Not implemented! (accepted: circle, square, gaussian)")
 
+        propagation_elements.add_beamline_element(BeamlineElement(optical_element=slit,
+                                                                  coordinates=ElementCoordinates(p=0, q=propagation_distance)  ))
+
+
+        propagator = PropagationManager.Instance()
+        propagation_parameters = PropagationParameters(wavefront=wf,
+                                                       propagation_elements=propagation_elements)
+
 
         if method == 'fft':
-            wf1 = propagate_1D_fresnel(wf, propagation_distance)
+            wf1 = propagator.do_propagation(propagation_parameters, Fresnel1D.HANDLER_NAME)
         elif method == 'convolution':
-            wf1 = propagate_1D_fresnel_convolution(wf, propagation_distance)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelConvolution1D.HANDLER_NAME)
         elif method == 'integral':
-            wf1 = propagate_1D_integral(wf, propagation_distance)
+            propagation_parameters.set_additional_parameters("detector_abscissas", [None])
+            wf1 = propagator.do_propagation(propagation_parameters, Integral1D.HANDLER_NAME)
         elif method == 'fraunhofer':
-            wf1 = propagate_1D_fraunhofer(wf, propagation_distance)
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer1D.HANDLER_NAME)
         else:
             raise Exception("Not implemented method: %s"%method)
 
@@ -270,33 +291,42 @@ class propagator2DTest(unittest.TestCase):
         #                                                         wavelength=wavelength,
         #                                                         number_of_points=(npixels_x,npixels_y))
 
-        wf = Wavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
+        wf = GenericWavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
                                                          y_min=-pixelsize_y*npixels_y/2,y_max=pixelsize_y*npixels_y/2,
                                                          number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
 
         wf.set_plane_wave_from_complex_amplitude((1.0+0j))
 
-        if aperture_type == 'circle':
-            wf.apply_pinhole(aperture_diameter/2)
-        elif aperture_type == 'square':
-            wf.apply_slit(-aperture_diameter/2, aperture_diameter/2,-aperture_diameter/2, aperture_diameter/2)
+
+        propagation_elements = PropagationElements()
+
+        slit = None
+
+        if aperture_type == 'square':
+            slit = WOSlit(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, -aperture_diameter/2, aperture_diameter/2))
         elif aperture_type == 'gaussian':
-            X = wf.get_mesh_x()
-            Y = wf.get_mesh_y()
-            window = numpy.exp(- (X*X + Y*Y)/2/(aperture_diameter/2.35)**2)
-            wf.rescale_amplitudes(window)
+            slit = WOGaussianSlit(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, -aperture_diameter/2, aperture_diameter/2))
         else:
             raise Exception("Not implemented! (accepted: circle, square, gaussian)")
 
+        propagation_elements.add_beamline_element(BeamlineElement(optical_element=slit,
+                                                                  coordinates=ElementCoordinates(p=0, q=propagation_distance)))
+
+
+        propagator = PropagationManager.Instance()
+        propagation_parameters = PropagationParameters(wavefront=wf,
+                                                       propagation_elements=propagation_elements)
 
         if method == 'fft':
-            wf1 = propagate_2D_fresnel(wf, propagation_distance)
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            wf1 = propagator.do_propagation(propagation_parameters, Fresnel2D.HANDLER_NAME)
         elif method == 'convolution':
-            wf1 = propagate_2D_fresnel_convolution(wf, propagation_distance)
-        elif method == 'srw':
-            wf1 = propagate_2D_fresnel_srw(wf, propagation_distance)
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelConvolution2D.HANDLER_NAME)
         elif method == 'integral':
-            wf1 = propagate_2D_integral(wf, propagation_distance)
+            propagation_parameters.set_additional_parameters("shuffle_interval", 0)
+            propagation_parameters.set_additional_parameters("calculate_grid_only", 1)
+            wf1 = propagator.do_propagation(propagation_parameters, Integral2D.HANDLER_NAME)
         else:
             raise Exception("Not implemented method: %s"%method)
 
@@ -365,41 +395,46 @@ class propagator2DTest(unittest.TestCase):
         #                                                         wavelength=wavelength,
         #                                                         number_of_points=(npixels_x,npixels_y))
 
-        wf = Wavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
+        wf = GenericWavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
                                                          y_min=-pixelsize_y*npixels_y/2,y_max=pixelsize_y*npixels_y/2,
                                                          number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
+        propagation_elements = PropagationElements()
 
         spherical_or_plane_and_lens = 0
         if spherical_or_plane_and_lens == 0:
             # set spherical wave at the lens entrance (radius=distance)
             wf.set_spherical_wave(complex_amplitude=1.0,radius=-propagation_distance)
+
+            propagation_elements.add_beamline_element(BeamlineElement(optical_element=WOScreen(),
+                                                                      coordinates=ElementCoordinates(p=0, q=propagation_distance)))
+
         else:
             # apply lens that will focus at propagation_distance downstream the lens.
             # Note that the vertical is a bit defocused
             wf.set_plane_wave_from_complex_amplitude(1.0+0j)
+
             focal_length = propagation_distance # / 2
-            wf.apply_ideal_lens(focal_length,focal_length)
 
-        print("Incident intensity: ",wf.get_intensity().sum())
+            propagation_elements.add_beamline_element(BeamlineElement(optical_element=WOIdealLens(focal_x=focal_length, focal_y=focal_length),
+                                                                      coordinates=ElementCoordinates(p=0, q=propagation_distance)))
 
-        # propagation downstream the lens to image plane
-        for i in range(propagation_steps):
-            if propagation_steps > 1:
-                print(">>> Propagating step %d of %d; propagation_distance=%g m"%(i+1,propagation_steps,
-                                                    propagation_distance*defocus_factor/propagation_steps))
-            if method == 'fft':
-                wf = propagate_2D_fresnel(wf, propagation_distance*defocus_factor/propagation_steps)
-            elif method == 'convolution':
-                wf = propagate_2D_fresnel_convolution(wf, propagation_distance*defocus_factor/propagation_steps)
-            elif method == 'srw':
-                wf = propagate_2D_fresnel_srw(wf, propagation_distance*defocus_factor/propagation_steps)
-            elif method == 'fraunhofer':
-                wf = propagate_2D_fraunhofer(wf, propagation_distance*defocus_factor/propagation_steps)
-            else:
-                raise Exception("Not implemented method: %s"%method)
+        print("Incident intensity: ", wf.get_intensity().sum())
 
+        propagator = PropagationManager.Instance()
+        propagation_parameters = PropagationParameters(wavefront=wf,
+                                                       propagation_elements=propagation_elements)
 
-
+        if method == 'fft':
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            wf1 = propagator.do_propagation(propagation_parameters, Fresnel2D.HANDLER_NAME)
+        elif method == 'convolution':
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelConvolution2D.HANDLER_NAME)
+        elif method == 'fraunhofer':
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer2D.HANDLER_NAME)
+        else:
+            raise Exception("Not implemented method: %s"%method)
 
         horizontal_profile = wf.get_intensity()[:,wf.size()[1]/2]
         horizontal_profile /= horizontal_profile.max()
@@ -411,7 +446,6 @@ class propagator2DTest(unittest.TestCase):
         if do_plot:
             from srxraylib.plot.gol import plot,plot_image
             plot_image(wf.get_intensity(),wf.get_coordinate_x(),wf.get_coordinate_y(),title='intensity (%s)'%method,show=0)
-            # plot_image(wf.get_amplitude(),wf.get_coordinate_x(),wf.get_coordinate_y(),title='amplitude (%s)'%method,show=0)
             plot_image(wf.get_phase(),wf.get_coordinate_x(),wf.get_coordinate_y(),title='phase (%s)'%method,show=0)
 
             plot(wf.get_coordinate_x(),horizontal_profile,
@@ -454,16 +488,39 @@ class propagator2DTest(unittest.TestCase):
         #                                                         y_step=pixelsize_y,
         #                                                         wavelength=wavelength,
         #                                                         number_of_points=(npixels_x,npixels_y))
-        wf = Wavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
+        wf = GenericWavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
                                                          y_min=-pixelsize_y*npixels_y/2,y_max=pixelsize_y*npixels_y/2,
                                                          number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
 
         wf.set_plane_wave_from_complex_amplitude((1.0+0j))
 
+
+        propagation_elements = PropagationElements()
+
+        slit = None
+
+        if aperture_type == 'square':
+            slit = WOSlit(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, -aperture_diameter/2, aperture_diameter/2))
+        elif aperture_type == 'gaussian':
+            slit = WOGaussianSlit(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, -aperture_diameter/2, aperture_diameter/2))
+        else:
+            raise Exception("Not implemented! (accepted: circle, square, gaussian)")
+
+        propagation_elements.add_beamline_element(BeamlineElement(optical_element=slit,
+                                                                  coordinates=ElementCoordinates(p=0, q=1.0)))
+
+
+        propagator = PropagationManager.Instance()
+        propagation_parameters = PropagationParameters(wavefront=wf,
+                                                       propagation_elements=propagation_elements)
+        propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+
+        wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer2D.HANDLER_NAME)
+
         if aperture_type == 'circle':
-            wf.apply_pinhole(aperture_diameter/2)
+            wf.clip_circle(aperture_diameter/2)
         elif aperture_type == 'square':
-            wf.apply_slit(-aperture_diameter/2, aperture_diameter/2,-aperture_diameter/2, aperture_diameter/2)
+            wf.clip_square(-aperture_diameter/2, aperture_diameter/2,-aperture_diameter/2, aperture_diameter/2)
         elif aperture_type == 'gaussian':
             X = wf.get_mesh_x()
             Y = wf.get_mesh_y()
@@ -471,10 +528,6 @@ class propagator2DTest(unittest.TestCase):
             wf.rescale_amplitudes(window)
         else:
             raise Exception("Not implemented! (accepted: circle, square, gaussian)")
-
-
-
-        wf1 = propagate_2D_fraunhofer(wf, propagation_distance=1.0) # propagating at 1 m means the result is like in angles
 
         if do_plot:
             plot_image(wf.get_intensity(),1e6*wf.get_coordinate_x(),1e6*wf.get_coordinate_y(),
@@ -524,20 +577,6 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
-    def test_propagate_2D_fresnel_srw_square(self):
-
-        if not SRWLIB_AVAILABLE:
-            print("SRW not available, skipping test_propagate_2D_fresnel_srw_square")
-            return
-
-        xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='srw',aperture_type='square',
-                                aperture_diameter=40e-6,
-                                #pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=1024/2,npixels_y=1024/4,
-                                propagation_distance=30.0,wavelength=1.24e-10)
-
-        numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
-
     def test_propagate_2D_fresnel_integral_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='integral',aperture_type='square',
                                 aperture_diameter=40e-6,
@@ -545,37 +584,6 @@ class propagator2DTest(unittest.TestCase):
                                 propagation_distance=30.0,wavelength=1.24e-10)
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
-
-
-
-    def test_propagate_2D_fresnel_all_circle(self):
-
-        xcalc_fft, ycalc_fft, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=0,method='fft',aperture_type='square',
-                                aperture_diameter=40e-6,
-                                pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                propagation_distance=5.0,wavelength=1.24e-10)
-
-        if  SRWLIB_AVAILABLE:
-
-            xcalc_srw, ycalc_srw, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=0,method='srw',aperture_type='square',
-                                    aperture_diameter=40e-6,
-                                    pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                    propagation_distance=5.0,wavelength=1.24e-10)
-
-            xcalc_srw, ycalc_convolution, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=0,method='convolution',aperture_type='square',
-                                    aperture_diameter=40e-6,
-                                    pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                    propagation_distance=5.0,wavelength=1.24e-10)
-
-
-            if do_plot:
-               x = xcalc_srw
-               y = numpy.vstack((ycalc_fft,ycalc_srw,ycalc_convolution))
-               plot_table(1e6*x,y,legend=["fft","srw","convolution"],ytitle="Intensity",xtitle="x coodinate [um]",
-                              title="Comparison circular aperture - near field")
-
-            numpy.testing.assert_almost_equal(ycalc_fft,ycalc_srw,1)
-            numpy.testing.assert_almost_equal(ycalc_convolution,ycalc_srw,1)
 
     def test_lens(self):
 
@@ -600,12 +608,6 @@ class propagator2DTest(unittest.TestCase):
                                 wavelength=wavelength,
                                 pixelsize_x=pixelsize_x,npixels_x=npixels_x,pixelsize_y=pixelsize_y,npixels_y=npixels_y,
                                 propagation_distance = propagation_distance, defocus_factor=defocus_factor)
-        if SRWLIB_AVAILABLE:
-            x_srw, y_srw = self.propagation_with_lens(do_plot=0,method='srw',
-                                    propagation_steps=propagation_steps,
-                                    wavelength=wavelength,
-                                    pixelsize_x=pixelsize_x,npixels_x=npixels_x,pixelsize_y=pixelsize_y,npixels_y=npixels_y,
-                                    propagation_distance = propagation_distance, defocus_factor=defocus_factor)
 
 
         x_convolution, y_convolution = self.propagation_with_lens(do_plot=0,method='convolution',
@@ -615,22 +617,11 @@ class propagator2DTest(unittest.TestCase):
                                 propagation_distance = propagation_distance, defocus_factor=defocus_factor)
 
         if do_plot:
-            if SRWLIB_AVAILABLE:
-                x = x_fft
-                y = numpy.vstack((y_fft,y_srw,y_convolution))
+            x = x_fft
+            y = numpy.vstack((y_fft,y_convolution))
 
-                plot_table(1e6*x,y,legend=["fft","srw","convolution"],ytitle="Intensity",xtitle="x coordinate [um]",
-                           title="Comparison 1:1 focusing")
-            else:
-                x = x_fft
-                y = numpy.vstack((y_fft,y_convolution))
-
-                plot_table(1e6*x,y,legend=["fft","convolution"],ytitle="Intensity",xtitle="x coordinate [um]",
-                           title="Comparison 1:1 focusing")
+            plot_table(1e6*x,y,legend=["fft","convolution"],ytitle="Intensity",xtitle="x coordinate [um]",
+                       title="Comparison 1:1 focusing")
 
         numpy.testing.assert_almost_equal(y_fft,y_convolution,1)
-
-        if SRWLIB_AVAILABLE:
-            numpy.testing.assert_almost_equal(y_fft,y_srw,1)
-            numpy.testing.assert_almost_equal(y_convolution,y_srw,1)
 
