@@ -2,7 +2,7 @@
 import numpy
 
 from syned.beamline.optical_elements.absorbers.slit import Slit
-from syned.beamline.optical_elements.shape import BoundaryShape, Rectangle, Ellipse
+from syned.beamline.shape import BoundaryShape, Rectangle, Ellipse
 
 from wofry.elements.decorators import WOOpticalElementDecorator
 

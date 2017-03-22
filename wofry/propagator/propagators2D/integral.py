@@ -115,7 +115,7 @@ class Integral2D(Propagator2D):
                                 numpy.power(wavefront.get_mesh_y() - Y_flatten[i],2) +
                                 numpy.power(propagation_distance,2) )
 
-                complex_amplitude_propagated[indices_x_flatten[i],indices_y_flatten[i]] = (amplitude / r * numpy.exp(1.j * wavenumber *  r)).sum()
+                complex_amplitude_propagated[int(indices_x_flatten[i]),int(indices_y_flatten[i])] = (amplitude / r * numpy.exp(1.j * wavenumber *  r)).sum()
 
 
             wavefront2 = GenericWavefront2D.initialize_wavefront_from_arrays(x,y,complex_amplitude_propagated,wavefront.get_wavelength())

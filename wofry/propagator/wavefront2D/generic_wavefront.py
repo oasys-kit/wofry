@@ -49,6 +49,8 @@ class GenericWavefront2D(Wavefront):
     @classmethod
     def initialize_wavefront_from_range(cls, x_min=0.0, x_max=0.0, y_min=0.0, y_max=0.0,
                                         number_of_points=(100,100), wavelength=1e-10 ):
+
+
         return GenericWavefront2D(wavelength, ScaledMatrix.initialize_from_range( \
                     numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex),
                     x_min,x_max,y_min,y_max,interpolator=False))

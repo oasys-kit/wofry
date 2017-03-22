@@ -13,7 +13,7 @@ except:
         SRWLIB_AVAILABLE = False
         print("SRW is not available")
 
-from syned.beamline.optical_elements.shape import Rectangle, Ellipse
+from syned.beamline.shape import Rectangle, Ellipse
 from syned.beamline.element_coordinates import ElementCoordinates
 from syned.beamline.beamline_element import BeamlineElement
 
@@ -34,7 +34,7 @@ if do_plot:
 
 
 from wofry.propagator.propagators2D.fraunhofer import Fraunhofer2D
-from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D, FresnelSRW
+from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D
 from wofry.propagator.propagators2D.integral import Integral2D
 from wofry.propagator.propagators2D import initialize_default_propagator_2D
 
@@ -43,8 +43,12 @@ from wofry.propagator.propagators1D.fresnel import Fresnel1D, FresnelConvolution
 from wofry.propagator.propagators1D.integral import Integral1D
 from wofry.propagator.propagators1D import initialize_default_propagator_1D
 
+from wofry.propagator.test.propagators.srw_fresnel import FresnelSRW
+
 propagator = PropagationManager.Instance()
 initialize_default_propagator_2D()
+propagator.add_propagator(FresnelSRW())
+
 initialize_default_propagator_1D()
 
 #
@@ -368,7 +372,7 @@ class propagator2DTest(unittest.TestCase):
         intensity_theory = get_theoretical_diffraction_pattern(angle_x,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
                                             wavelength=wavelength,normalization=True)
 
-        intensity_calculated =  wf1.get_intensity()[:,wf1.size()[1]/2]
+        intensity_calculated =  wf1.get_intensity()[:,int(wf1.size()[1]/2)]
         intensity_calculated /= intensity_calculated.max()
 
         if do_plot:
@@ -452,10 +456,10 @@ class propagator2DTest(unittest.TestCase):
         else:
             raise Exception("Not implemented method: %s"%method)
 
-        horizontal_profile = wf.get_intensity()[:,wf.size()[1]/2]
+        horizontal_profile = wf.get_intensity()[:, int(wf.size()[1]/2)]
         horizontal_profile /= horizontal_profile.max()
         print("FWHM of the horizontal profile: %g um"%(1e6*line_fwhm(horizontal_profile)*wf.delta()[0]))
-        vertical_profile = wf.get_intensity()[wf.size()[0]/2,:]
+        vertical_profile = wf.get_intensity()[int(wf.size()[0]/2),:]
         vertical_profile /= vertical_profile.max()
         print("FWHM of the vertical profile: %g um"%(1e6*line_fwhm(vertical_profile)*wf.delta()[1]))
 
@@ -563,7 +567,7 @@ class propagator2DTest(unittest.TestCase):
                                             wavelength=wavelength,normalization=True)
 
 
-        intensity_calculated =  wf1.get_intensity()[:,wf1.size()[1]/2]
+        intensity_calculated =  wf1.get_intensity()[:,int(wf1.size()[1]/2)]
         intensity_calculated /= intensity_calculated.max()
 
         if do_plot:
@@ -585,7 +589,7 @@ class propagator2DTest(unittest.TestCase):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='srw',aperture_type='square',
                                 aperture_diameter=40e-6,
                                 #pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=1024/2,npixels_y=1024/4,
+                                pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=int(1024/2),npixels_y=int(1024/4),
                                 propagation_distance=30.0,wavelength=1.24e-10)
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
@@ -609,7 +613,7 @@ class propagator2DTest(unittest.TestCase):
     def test_propagate_2D_fresnel_integral_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='integral',aperture_type='square',
                                 aperture_diameter=40e-6,
-                                pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=1024/2,npixels_y=1024/4,
+                                pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=int(1024/2),npixels_y=int(1024/4),
                                 propagation_distance=30.0,wavelength=1.24e-10)
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
@@ -617,12 +621,9 @@ class propagator2DTest(unittest.TestCase):
     def test_lens(self):
 
         lens_diameter = 0.002
-        npixels_x = 2048
+        npixels_x = int(2048)
         pixelsize_x = lens_diameter / npixels_x
         print("pixelsize: ",pixelsize_x)
-
-
-
 
         pixelsize_y = pixelsize_x
         npixels_y = npixels_x
