@@ -1,7 +1,7 @@
-SYNED (SYNchrotron Elements Dictionary) library
+WOFRY (Wave Optics) library
 ======
 
-Kernel classes for SYNED in python
+Kernel classes for WOFRY in python
 
 syned package requires Python 3.3 or newer.
 
@@ -11,7 +11,7 @@ Installing
 
 syned is pip installable (https://pip.pypa.io/), simply run::
 
-    pip install syned
+    pip install wofry
 
 to install it.
 

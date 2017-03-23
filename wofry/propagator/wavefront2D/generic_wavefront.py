@@ -1,7 +1,7 @@
 import numpy
 import scipy.constants as codata
 
-from srxraylib.util.data_structures import ScaledMatrix
+from srxraylib.util.data_structures import ScaledMatrix, ScaledArray
 
 from wofry.propagator.wavefront import Wavefront, WavefrontDimension
 from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
@@ -19,18 +19,9 @@ class GenericWavefront2D(Wavefront):
     def get_dimension(self):
         return WavefrontDimension.TWO
 
-    #TODO
-    def get_Wavefront1D_from_profile(self, axis, coordinate):
-        return GenericWavefront1D()
-
-    #TODO
-    def get_Wavefront1D_from_histogram(self, axis):
-        return GenericWavefront1D()
-
-
-    def __init__(self, wavelength=1e-10, electric_field_array=None):
-        self.wavelength = wavelength
-        self.electric_field_array = electric_field_array
+    def __init__(self, wavelength=1e-10, electric_field_matrix=None):
+        self._wavelength = wavelength
+        self._electric_field_matrix = electric_field_matrix
 
     @classmethod
     def initialize_wavefront(cls, number_of_points=(100,100) ,wavelength=1e-10):
@@ -66,6 +57,26 @@ class GenericWavefront2D(Wavefront):
                     z_array,x_array[0],numpy.abs(x_array[1]-x_array[0]),
                             y_array[0],numpy.abs(y_array[1]-y_array[0]),interpolator=False)
         return GenericWavefront2D(wavelength,sM)
+
+
+    def get_Wavefront1D_from_profile(self, axis, coordinate):
+        if axis == 0: # fixed X
+            index = numpy.argmin(numpy.abs(self._electric_field_matrix.xcoord - coordinate))
+
+            return GenericWavefront1D(wavelength=self._wavelength,
+                                      electric_field_array=ScaledArray(self._electric_field_matrix.ycoord,
+                                                                       self._electric_field_matrix.z_values[index][:]))
+        elif axis == 1:
+            index = numpy.argmin(numpy.abs(self._electric_field_matrix.ycoord - coordinate))
+
+            return GenericWavefront1D(wavelength=self._wavelength,
+                                      electric_field_array=ScaledArray(self._electric_field_matrix.xcoord,
+                                                                       self._electric_field_matrix.z_values[:][index]))
+
+    #TODO
+    def get_Wavefront1D_from_histogram(self, axis):
+        raise NotImplementedError("Not yet implemented!")
+
 
     # main parameters
 
