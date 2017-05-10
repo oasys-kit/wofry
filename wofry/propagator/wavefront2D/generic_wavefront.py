@@ -24,16 +24,22 @@ class GenericWavefront2D(Wavefront):
         self._electric_field_matrix = electric_field_matrix
 
     @classmethod
-    def initialize_wavefront(cls, number_of_points=(100,100) ,wavelength=1e-10):
-        return GenericWavefront2D(wavelength, ScaledMatrix.initialize(
-            np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex),interpolator=False))
+    def initialize_wavefront(cls, number_of_points=(100,100), wavelength=1e-10):
+        return GenericWavefront2D(wavelength,
+                                  ScaledMatrix.initialize(np_array=numpy.full(number_of_points, (1.0 + 0.0j),
+                                                                              dtype=complex),
+                                                          interpolator=False))
 
     @classmethod
     def initialize_wavefront_from_steps(cls, x_start=0.0, x_step=0.0, y_start=0.0, y_step=0.0,
-                                        number_of_points=(100,100),wavelength=1e-10, ):
-        sM = ScaledMatrix.initialize_from_steps(
-                    numpy.full(number_of_points,(1.0 + 0.0j), dtype=complex),
-                    x_start,x_step,y_start,y_step,interpolator=False)
+                                        number_of_points=(100,100), wavelength=1e-10):
+        sM = ScaledMatrix.initialize_from_steps(numpy.full(number_of_points,(1.0 + 0.0j),
+                                                           dtype=complex),
+                                                x_start,
+                                                x_step,
+                                                y_start,
+                                                y_step,
+                                                interpolator=False)
 
         return GenericWavefront2D(wavelength,sM)
 
@@ -49,29 +55,33 @@ class GenericWavefront2D(Wavefront):
     @classmethod
     def initialize_wavefront_from_arrays(cls,x_array, y_array,  z_array, wavelength=1e-10):
         sh = z_array.shape
+
         if sh[0] != x_array.size:
             raise Exception("Unmatched shapes for x")
+        
         if sh[1] != y_array.size:
             raise Exception("Unmatched shapes for y")
+
         sM = ScaledMatrix.initialize_from_steps(
                     z_array,x_array[0],numpy.abs(x_array[1]-x_array[0]),
                             y_array[0],numpy.abs(y_array[1]-y_array[0]),interpolator=False)
-        return GenericWavefront2D(wavelength,sM)
+
+        return GenericWavefront2D(wavelength, sM)
 
 
     def get_Wavefront1D_from_profile(self, axis, coordinate):
         if axis == 0: # fixed X
-            index = numpy.argmin(numpy.abs(self._electric_field_matrix.xcoord - coordinate))
+            index = numpy.argmin(numpy.abs(self._electric_field_matrix.x_coord - coordinate))
 
             return GenericWavefront1D(wavelength=self._wavelength,
-                                      electric_field_array=ScaledArray(self._electric_field_matrix.ycoord,
-                                                                       self._electric_field_matrix.z_values[index][:]))
+                                      electric_field_array=ScaledArray(scale=self._electric_field_matrix.y_coord,
+                                                                       np_array=self._electric_field_matrix.z_values[index][:]))
         elif axis == 1:
-            index = numpy.argmin(numpy.abs(self._electric_field_matrix.ycoord - coordinate))
+            index = numpy.argmin(numpy.abs(self._electric_field_matrix.y_coord - coordinate))
 
             return GenericWavefront1D(wavelength=self._wavelength,
-                                      electric_field_array=ScaledArray(self._electric_field_matrix.xcoord,
-                                                                       self._electric_field_matrix.z_values[:][index]))
+                                      electric_field_array=ScaledArray(scale=self._electric_field_matrix.x_coord,
+                                                                       np_array=self._electric_field_matrix.z_values[:][index]))
 
     #TODO
     def get_Wavefront1D_from_histogram(self, axis):
@@ -81,7 +91,7 @@ class GenericWavefront2D(Wavefront):
     # main parameters
 
     def size(self):
-        return self.electric_field_array.shape()
+        return self._electric_field_matrix.shape()
 
     def delta(self):
         x = self.get_coordinate_x()
@@ -92,23 +102,23 @@ class GenericWavefront2D(Wavefront):
         return self.get_coordinate_x()[0],self.get_coordinate_y()[0]
 
     def get_wavelength(self):
-        return self.wavelength
+        return self._wavelength
 
     def get_wavenumber(self):
-        return 2*numpy.pi/self.wavelength
+        return 2*numpy.pi/self._wavelength
 
     def get_photon_energy(self):
         m2ev = codata.c * codata.h / codata.e      # lambda(m)  = m2eV / energy(eV)
-        return  m2ev / self.wavelength
+        return  m2ev / self._wavelength
 
     def get_coordinate_x(self):
-        return self.electric_field_array.get_x_values()
+        return self._electric_field_matrix.get_x_values()
 
     def get_coordinate_y(self):
-        return self.electric_field_array.get_y_values()
+        return self._electric_field_matrix.get_y_values()
 
     def get_complex_amplitude(self):
-        return self.electric_field_array.get_z_values()
+        return self._electric_field_matrix.get_z_values()
 
     def get_amplitude(self):
         return numpy.absolute(self.get_complex_amplitude())
@@ -156,7 +166,7 @@ class GenericWavefront2D(Wavefront):
     # interpolated values (a bit redundant, but kept the same interfacs as wavefront 1D)
 
     def get_interpolated(self,x_value,y_value,toreturn='complex_amplitude'):
-        interpolated_values = self.electric_field_array.interpolate_value(x_value,y_value)
+        interpolated_values = self._electric_field_matrix.interpolate_value(x_value,y_value)
         if toreturn == 'complex_amplitude':
             return interpolated_values
         elif toreturn == 'amplitude':
@@ -204,25 +214,25 @@ class GenericWavefront2D(Wavefront):
     # modifiers
 
     def set_wavelength(self,wavelength):
-        self.wavelength = wavelength
+        self._wavelength = wavelength
 
     def set_wavenumber(self,wavenumber):
-        self.wavelength = 2*numpy.pi / wavenumber
+        self._wavelength = 2*numpy.pi / wavenumber
 
     def set_photon_energy(self,photon_energy):
         m2ev = codata.c * codata.h / codata.e      # lambda(m)  = m2eV / energy(eV)
-        self.wavelength = m2ev / photon_energy
+        self._wavelength = m2ev / photon_energy
 
     def set_complex_amplitude(self,complex_amplitude):
-        if self.electric_field_array.shape() != complex_amplitude.shape:
+        if self._electric_field_matrix.shape() != complex_amplitude.shape:
             raise Exception("Incompatible shape")
-        self.electric_field_array.set_z_values(complex_amplitude)
+        self._electric_field_matrix.set_z_values(complex_amplitude)
 
     def set_plane_wave_from_complex_amplitude(self, complex_amplitude=(1.0 + 0.0j)):
-        new_value = self.electric_field_array.get_z_values()
+        new_value = self._electric_field_matrix.get_z_values()
         new_value *= 0.0
         new_value += complex_amplitude
-        self.electric_field_array.set_z_values(new_value)
+        self._electric_field_matrix.set_z_values(new_value)
 
     def set_plane_wave_from_amplitude_and_phase(self, amplitude=1.0, phase=0.0):
         self.set_plane_wave_from_complex_amplitude(amplitude*numpy.cos(phase) + 1.0j*amplitude*numpy.sin(phase))
@@ -240,31 +250,31 @@ class GenericWavefront2D(Wavefront):
                                 (self.get_mesh_x()**2+self.get_mesh_y()**2)/(-2*radius))
         # new_value = numpy.exp(-1.0j * self.get_wavenumber() *
         #                         (self.get_mesh_x()**2+self.get_mesh_y()**2)/(-2*radius))
-        self.electric_field_array.set_z_values(new_value)
+        self._electric_field_matrix.set_z_values(new_value)
 
     def add_phase_shift(self, phase_shift):
-        new_value = self.electric_field_array.get_z_values()
+        new_value = self._electric_field_matrix.get_z_values()
         new_value *= numpy.exp(1.0j*phase_shift)
-        self.electric_field_array.set_z_values(new_value)
+        self._electric_field_matrix.set_z_values(new_value)
 
     def add_phase_shifts(self, phase_shifts):
-        if phase_shifts.shape != self.electric_field_array.shape():
+        if phase_shifts.shape != self._electric_field_matrix.shape():
             raise Exception("Phase Shifts array has different dimension")
-        new_value = self.electric_field_array.get_z_values()
+        new_value = self._electric_field_matrix.get_z_values()
         new_value *= numpy.exp(1.0j*phase_shifts)
-        self.electric_field_array.set_z_values(new_value)
+        self._electric_field_matrix.set_z_values(new_value)
 
     def rescale_amplitude(self, factor):
-        new_value = self.electric_field_array.get_z_values()
+        new_value = self._electric_field_matrix.get_z_values()
         new_value *= factor
-        self.electric_field_array.set_z_values(new_value)
+        self._electric_field_matrix.set_z_values(new_value)
 
     def rescale_amplitudes(self, factors):
-        if factors.shape != self.electric_field_array.shape():
+        if factors.shape != self._electric_field_matrix.shape():
             raise Exception("Factors array has different dimension")
-        new_value = self.electric_field_array.get_z_values()
+        new_value = self._electric_field_matrix.get_z_values()
         new_value *= factors
-        self.electric_field_array.set_z_values(new_value)
+        self._electric_field_matrix.set_z_values(new_value)
 
     def rebin(self,expansion_points_horizontal, expansion_points_vertical, expansion_range_horizontal, expansion_range_vertical,
               keep_the_same_intensity=0,set_extrapolation_to_zero=0):
@@ -294,7 +304,7 @@ class GenericWavefront2D(Wavefront):
         return new_wf
 
     def clip_square(self, x_min, x_max, y_min, y_max, negative=False):
-        window = numpy.ones(self.electric_field_array.shape())
+        window = numpy.ones(self._electric_field_matrix.shape())
 
         if not negative:
             lower_window_x = numpy.where(self.get_coordinate_x() < x_min)
@@ -317,7 +327,7 @@ class GenericWavefront2D(Wavefront):
 
     # new
     def clip_circle(self, radius, x_center=0.0, y_center=0.0, negative=False):
-        window = numpy.zeros(self.electric_field_array.shape())
+        window = numpy.zeros(self._electric_field_matrix.shape())
         X = self.get_mesh_x()
         Y = self.get_mesh_y()
         distance_to_center = numpy.sqrt( (X-x_center)**2 + (Y-y_center)**2 )
