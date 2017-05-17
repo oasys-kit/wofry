@@ -5,15 +5,15 @@ import os
 import subprocess
 
 try:
-    from setuptools import setup
+    from setuptools import find_packages, setup
 except ImportError:
     import ez_setup
     ez_setup.use_setuptools()
-    from setuptools import setup
+    from setuptools import find_packages, setup
 
 NAME = 'wofry'
 
-VERSION = '1.0.0'
+VERSION = '1.0.3'
 ISRELEASED = False
 
 DESCRIPTION = 'WOFRY (Wave Optics FRamework in pYthon) kernel library'
@@ -35,7 +35,7 @@ KEYWORDS = (
 )
 
 CLASSIFIERS = (
-    'Development Status :: 1 - Planning',
+    'Development Status :: 5 - Production/Stable',
     'Environment :: Console',
     'Environment :: Plugins',
     'Programming Language :: Python :: 3',
@@ -128,9 +128,7 @@ if not release:
         a.close()
 
 
-PACKAGES = [
-    "wofry",
-]
+PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
 
 PACKAGE_DATA = {
 }
