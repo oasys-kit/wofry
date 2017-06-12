@@ -43,11 +43,18 @@ from wofry.propagator.propagators1D.fresnel import Fresnel1D, FresnelConvolution
 from wofry.propagator.propagators1D.integral import Integral1D
 from wofry.propagator.propagators1D import initialize_default_propagator_1D
 
-from wofry.propagator.test.propagators.srw_fresnel import FresnelSRW
+try:
+    from wofry.propagator.test.propagators.srw_fresnel import FresnelSRW
+except:
+    print("FresnelSRW is not available")
 
 propagator = PropagationManager.Instance()
 initialize_default_propagator_2D()
-propagator.add_propagator(FresnelSRW())
+
+try:
+    propagator.add_propagator(FresnelSRW())
+except:
+    print("FresnelSRW cannot be added")
 
 initialize_default_propagator_1D()
 
@@ -289,6 +296,7 @@ class propagator2DTest(unittest.TestCase):
     #          three methods available: 'fft': fft -> multiply by kernel in freq -> ifft
     #                                   'convolution': scipy.signal.fftconvolve(wave,kernel in space)
     #                                   'srw': use the SRW package
+
     def propagate_2D_fresnel(self,do_plot=do_plot,method='fft',
                                 wavelength=1.24e-10,aperture_type='square',aperture_diameter=40e-6,
                                 pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
@@ -420,7 +428,7 @@ class propagator2DTest(unittest.TestCase):
                                                          number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
         propagation_elements = PropagationElements()
 
-        spherical_or_plane_and_lens = 0
+        spherical_or_plane_and_lens = 1
         if spherical_or_plane_and_lens == 0:
             # set spherical wave at the lens entrance (radius=distance)
             wf.set_spherical_wave(complex_amplitude=1.0,radius=-propagation_distance)
@@ -435,8 +443,9 @@ class propagator2DTest(unittest.TestCase):
 
             focal_length = propagation_distance # / 2
 
-            propagation_elements.add_beamline_element(BeamlineElement(optical_element=WOIdealLens(focal_x=focal_length, focal_y=focal_length),
-                                                                      coordinates=ElementCoordinates(p=0, q=propagation_distance)))
+            propagation_elements.add_beamline_element(BeamlineElement(optical_element=
+                WOIdealLens("IdealLens",focal_x=focal_length, focal_y=focal_length),
+                coordinates=ElementCoordinates(p=0, q=propagation_distance)))
 
         print("Incident intensity: ", wf.get_intensity().sum())
 
@@ -456,24 +465,24 @@ class propagator2DTest(unittest.TestCase):
         else:
             raise Exception("Not implemented method: %s"%method)
 
-        horizontal_profile = wf.get_intensity()[:, int(wf.size()[1]/2)]
+        horizontal_profile = wf1.get_intensity()[:, int(wf.size()[1]/2)]
         horizontal_profile /= horizontal_profile.max()
-        print("FWHM of the horizontal profile: %g um"%(1e6*line_fwhm(horizontal_profile)*wf.delta()[0]))
-        vertical_profile = wf.get_intensity()[int(wf.size()[0]/2),:]
+        print("FWHM of the horizontal profile: %g um"%(1e6*line_fwhm(horizontal_profile)*wf1.delta()[0]))
+        vertical_profile = wf1.get_intensity()[int(wf1.size()[0]/2),:]
         vertical_profile /= vertical_profile.max()
-        print("FWHM of the vertical profile: %g um"%(1e6*line_fwhm(vertical_profile)*wf.delta()[1]))
+        print("FWHM of the vertical profile: %g um"%(1e6*line_fwhm(vertical_profile)*wf1.delta()[1]))
 
         if do_plot:
             from srxraylib.plot.gol import plot,plot_image
-            plot_image(wf.get_intensity(),wf.get_coordinate_x(),wf.get_coordinate_y(),title='intensity (%s)'%method,show=0)
-            plot_image(wf.get_phase(),wf.get_coordinate_x(),wf.get_coordinate_y(),title='phase (%s)'%method,show=0)
+            plot_image(wf1.get_intensity(),wf1.get_coordinate_x(),wf1.get_coordinate_y(),title='intensity (%s)'%method,show=0)
+            plot_image(wf1.get_phase(),wf1.get_coordinate_x(),wf1.get_coordinate_y(),title='phase (%s)'%method,show=0)
 
-            plot(wf.get_coordinate_x(),horizontal_profile,
-                 wf.get_coordinate_y(),vertical_profile,
+            plot(wf1.get_coordinate_x(),horizontal_profile,
+                 wf1.get_coordinate_y(),vertical_profile,
                  legend=['Horizontal profile','Vertical profile'],title="%s"%method,show=show)
 
-        print("Output intensity: ",wf.get_intensity().sum())
-        return wf.get_coordinate_x(),horizontal_profile
+        print("Output intensity: ",wf1.get_intensity().sum())
+        return wf1.get_coordinate_x(),horizontal_profile
 
     #
     # TESTS

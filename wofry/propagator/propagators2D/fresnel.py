@@ -44,6 +44,17 @@ class Fresnel2D(Propagator2D):
     """
 
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
+
+        is_generic_wavefront = isinstance(wavefront, GenericWavefront2D)
+
+        if is_generic_wavefront:
+            pass
+        else:
+            wavefront_original = wavefront
+            wavefront = wavefront.toGenericWavefront()
+
+
+
         if not parameters.has_additional_parameter("shift_half_pixel"):
             shift_half_pixel = True
         else:
@@ -89,7 +100,12 @@ class Fresnel2D(Propagator2D):
                                                                             wavefront.get_coordinate_y(),
                                                                             ifft,
                                                                             wavelength=wavelength)
-        return wf_propagated
+
+        if is_generic_wavefront:
+            return wf_propagated
+        else:
+            return wavefront_original.fromGenericWavefront(wf_propagated)
+
 
 class FresnelConvolution2D(Propagator2D):
 
@@ -107,6 +123,15 @@ class FresnelConvolution2D(Propagator2D):
     """
 
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
+
+        is_generic_wavefront = isinstance(wavefront, GenericWavefront2D)
+
+        if is_generic_wavefront:
+            pass
+        else:
+            wavefront_original = wavefront
+            wavefront = wavefront.toGenericWavefront()
+
         if not parameters.has_additional_parameter("shift_half_pixel"):
             shift_half_pixel = True
         else:
@@ -135,4 +160,7 @@ class FresnelConvolution2D(Propagator2D):
                                                                      wavefront.get_coordinate_y(),
                                                                      tmp,
                                                                      wavelength=wavelength)
-        return wf_propagated
+        if is_generic_wavefront:
+            return wf_propagated
+        else:
+            return wavefront_original.fromGenericWavefront(wf_propagated)
