@@ -15,7 +15,7 @@
 
 import numpy
 
-from syned.beamline.optical_elements.shape import Rectangle, Ellipse
+from syned.beamline.shape import Rectangle, Ellipse
 from syned.beamline.element_coordinates import ElementCoordinates
 from syned.beamline.beamline_element import BeamlineElement
 
