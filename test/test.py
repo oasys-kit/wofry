@@ -6,11 +6,12 @@ from syned.beamline.element_coordinates import ElementCoordinates
 from syned.beamline.beamline_element import BeamlineElement
 from syned.beamline.optical_elements.absorbers.slit import Slit
 from syned.beamline.optical_elements.mirrors.mirror import Mirror
-from syned.beamline.optical_elements.shape import Rectangle, Ellipsoid
+from syned.beamline.shape import Rectangle, Ellipsoid
 
 from wofry.elements.decorators import WOLightSourceDecorator, WOOpticalElementDecorator
 from wofry.propagator.decorators import WavefrontDecorator
-from wofry.propagator.wavefront import GenericWavefront1D, GenericWavefront2D, WavefrontDimension
+from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
+from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D, WavefrontDimension
 from wofry.propagator.propagator import PropagationManager, AbstractPropagator, PropagationParameters, PropagationElements
 
 # ----------------------------------------------
