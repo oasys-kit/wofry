@@ -26,7 +26,7 @@ class GenericWavefront2D(Wavefront):
     @classmethod
     def initialize_wavefront(cls, number_of_points=(100,100), wavelength=1e-10):
         return GenericWavefront2D(wavelength,
-                                  ScaledMatrix.initialize(np_array=numpy.full(number_of_points, (1.0 + 0.0j),
+                                  ScaledMatrix.initialize(np_array_z=numpy.full(number_of_points, (1.0 + 0.0j),
                                                                               dtype=complex),
                                                           interpolator=False))
 
