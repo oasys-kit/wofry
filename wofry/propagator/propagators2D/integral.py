@@ -87,7 +87,7 @@ class Integral2D(Propagator2D):
 
                     amplitude_propagated[i,j] = (amplitude / r * numpy.exp(1.j * wavenumber *  r)).sum()
 
-            wavefront2 = GenericWavefront2D.initialize_wavefront_from_arrays(det_x,det_y,amplitude_propagated)
+            output_wavefront = GenericWavefront2D.initialize_wavefront_from_arrays(det_x,det_y,amplitude_propagated)
 
         else:
             x = wavefront.get_coordinate_x()
@@ -117,7 +117,9 @@ class Integral2D(Propagator2D):
 
                 complex_amplitude_propagated[int(indices_x_flatten[i]),int(indices_y_flatten[i])] = (amplitude / r * numpy.exp(1.j * wavenumber *  r)).sum()
 
+            output_wavefront = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=x,
+                                                                                   y_array=y,
+                                                                                   z_array=complex_amplitude_propagated,
+                                                                                   wavelength=wavefront.get_wavelength())
 
-            wavefront2 = GenericWavefront2D.initialize_wavefront_from_arrays(x,y,complex_amplitude_propagated,wavefront.get_wavelength())
-
-        return  wavefront2
+        return  output_wavefront

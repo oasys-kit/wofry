@@ -22,6 +22,7 @@
 
 import numpy
 import scipy.constants as codata
+
 angstroms_to_eV = codata.h*codata.c/codata.e*1e10
 
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
@@ -44,17 +45,6 @@ class Fresnel2D(Propagator2D):
     """
 
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
-
-        is_generic_wavefront = isinstance(wavefront, GenericWavefront2D)
-
-        if is_generic_wavefront:
-            pass
-        else:
-            wavefront_original = wavefront
-            wavefront = wavefront.toGenericWavefront()
-
-
-
         if not parameters.has_additional_parameter("shift_half_pixel"):
             shift_half_pixel = True
         else:
@@ -94,18 +84,12 @@ class Fresnel2D(Propagator2D):
         fft *= numpy.exp((-1.0j) * numpy.pi * wavelength * propagation_distance *
                       numpy.fft.fftshift(freq_xy[0]*freq_xy[0] + freq_xy[1]*freq_xy[1]) )
 
-        ifft = numpy.fft.ifft2(fft)
-
-        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(wavefront.get_coordinate_x(),
-                                                                            wavefront.get_coordinate_y(),
-                                                                            ifft,
+        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=wavefront.get_coordinate_x(),
+                                                                            y_array=wavefront.get_coordinate_y(),
+                                                                            z_array=numpy.fft.ifft2(fft),
                                                                             wavelength=wavelength)
 
-        if is_generic_wavefront:
-            return wf_propagated
-        else:
-            return wavefront_original.fromGenericWavefront(wf_propagated)
-
+        return wf_propagated
 
 class FresnelConvolution2D(Propagator2D):
 
@@ -154,13 +138,11 @@ class FresnelConvolution2D(Propagator2D):
                            (X**2 + Y**2) / 2 / propagation_distance)
         kernel *= numpy.exp(1j*2*numpy.pi/wavefront.get_wavelength() * propagation_distance)
         kernel /=  1j * wavefront.get_wavelength() * propagation_distance
-        tmp = fftconvolve(wavefront.get_complex_amplitude(),kernel,mode='same')
 
-        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(wavefront.get_coordinate_x(),
-                                                                     wavefront.get_coordinate_y(),
-                                                                     tmp,
-                                                                     wavelength=wavelength)
-        if is_generic_wavefront:
-            return wf_propagated
-        else:
-            return wavefront_original.fromGenericWavefront(wf_propagated)
+        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=wavefront.get_coordinate_x(),
+                                                                            y_array=wavefront.get_coordinate_y(),
+                                                                            z_array=fftconvolve(wavefront.get_complex_amplitude(),
+                                                                                                kernel,
+                                                                                                mode='same'),
+                                                                            wavelength=wavelength)
+        return wf_propagated

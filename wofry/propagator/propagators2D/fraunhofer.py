@@ -38,7 +38,7 @@ class Fraunhofer2D(Propagator2D):
         #
         x =  wavefront.get_coordinate_x()
         y =  wavefront.get_coordinate_y()
-        half_max_aperture = 0.5 * numpy.array( (x[-1]-x[0],y[-1]-y[0])).max()
+        half_max_aperture = 0.5 * numpy.array((x[-1]-x[0], y[-1]-y[0])).max()
         far_field_distance = half_max_aperture**2/wavelength
         if propagation_distance < far_field_distance:
             print("WARNING: Fraunhoffer diffraction valid for distances > > half_max_aperture^2/lambda = %f m (propagating at %4.1f)"%
@@ -58,7 +58,7 @@ class Fraunhofer2D(Propagator2D):
         pixelsize = delta[0] # p_x[1] - p_x[0]
         npixels = shape[0]
         freq_nyquist = 0.5/pixelsize
-        freq_n = numpy.linspace(-1.0,1.0,npixels)
+        freq_n = numpy.linspace(-1.0, 1.0, npixels)
         freq_x = freq_n * freq_nyquist
         freq_x *= wavelength
 
@@ -66,7 +66,7 @@ class Fraunhofer2D(Propagator2D):
         pixelsize = delta[1]
         npixels = shape[1]
         freq_nyquist = 0.5/pixelsize
-        freq_n = numpy.linspace(-1.0,1.0,npixels)
+        freq_n = numpy.linspace(-1.0, 1.0, npixels)
         freq_y = freq_n * freq_nyquist
         freq_y *= wavelength
 
@@ -79,5 +79,9 @@ class Fraunhofer2D(Propagator2D):
             freq_x *= propagation_distance
             freq_y *= propagation_distance
 
-        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(freq_x,freq_y,F2,wavelength=wavelength)
+        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=freq_x,
+                                                                            y_array=freq_y,
+                                                                            z_array=F2,
+                                                                            wavelength=wavelength)
+
         return  wf_propagated

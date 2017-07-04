@@ -1,4 +1,4 @@
-import numpy
+import numpy, copy
 import scipy.constants as codata
 
 from srxraylib.util.data_structures import ScaledArray, ScaledMatrix
@@ -17,6 +17,11 @@ class GenericWavefront1D(Wavefront):
     def __init__(self, wavelength=1e-10, electric_field_array=None):
         self._wavelength = wavelength
         self._electric_field_array = electric_field_array
+
+    def duplicate(self):
+        return GenericWavefront1D(wavelength=self._wavelength,
+                                  electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_matrix.np_array),
+                                                                   scale=copy.copy(self._electric_field_matrix.scale)))
 
     @classmethod
     def initialize_wavefront(cls, wavelength=1e-10, number_of_points=1000):

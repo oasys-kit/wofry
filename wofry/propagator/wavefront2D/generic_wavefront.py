@@ -10,18 +10,27 @@ from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 # Wavefront 2D
 # --------------------------------------------------
 
+import copy
 
 class GenericWavefront2D(Wavefront):
     XX = 0
     YY = 1
 
 
-    def get_dimension(self):
-        return WavefrontDimension.TWO
-
     def __init__(self, wavelength=1e-10, electric_field_matrix=None):
         self._wavelength = wavelength
         self._electric_field_matrix = electric_field_matrix
+
+    def get_dimension(self):
+        return WavefrontDimension.TWO
+
+
+    def duplicate(self):
+        return GenericWavefront2D(wavelength=self._wavelength,
+                                  electric_field_matrix=ScaledMatrix(x_coord=copy.copy(self._electric_field_matrix.x_coord),
+                                                                     y_coord=copy.copy(self._electric_field_matrix.y_coord),
+                                                                     z_values=copy.copy(self._electric_field_matrix.z_values),
+                                                                     interpolator=self._electric_field_matrix.interpolator))
 
     @classmethod
     def initialize_wavefront(cls, number_of_points=(100,100), wavelength=1e-10):
