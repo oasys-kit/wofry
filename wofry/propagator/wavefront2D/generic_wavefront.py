@@ -97,6 +97,11 @@ class GenericWavefront2D(Wavefront):
         raise NotImplementedError("Not yet implemented!")
 
 
+    @classmethod
+    def combine_1D_wavefronts_into_2D(cls, wavefront_h, wavefront_v, wavelength):
+        pass
+
+
     # main parameters
 
     def size(self):
