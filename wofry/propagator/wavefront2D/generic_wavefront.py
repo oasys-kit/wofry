@@ -98,9 +98,35 @@ class GenericWavefront2D(Wavefront):
 
 
     @classmethod
-    def combine_1D_wavefronts_into_2D(cls, wavefront_h, wavefront_v, wavelength):
-        pass
+    def combine_1D_wavefronts_into_2D(cls, wavefront_h, wavefront_v, normalize_to=0, wavelength=0.0):
+        if not wavelength > 0.0:
+            wavelength = (wavefront_h.get_wavelength() + wavefront_v.get_wavelength())/2
 
+        if normalize_to == 0:
+            normalization_factor = numpy.sqrt(numpy.sum(wavefront_h.get_intensity()))
+        elif normalize_to == 1:
+            normalization_factor = numpy.sqrt(numpy.sum(wavefront_v.get_intensity()))
+        else:
+            normalization_factor = 1.0
+
+
+        wavefront_2D = GenericWavefront2D.initialize_wavefront_from_steps(x_start=wavefront_h.offset(),
+                                                                          x_step=wavefront_h.delta(),
+                                                                          y_start=wavefront_v.offset(),
+                                                                          y_step=wavefront_v.delta(),
+                                                                          number_of_points=(wavefront_h.size(), wavefront_v.size()))
+
+        complex_amplitude =  numpy.zeros((wavefront_h.size(), wavefront_v.size()), dtype=complex)
+
+        for i in range (0, wavefront_h.size()):
+            for j in range (0, wavefront_v.size()):
+                complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j], 0.0)
+
+        normalization_factor /= numpy.sum(numpy.abs(complex_amplitude))
+
+        wavefront_2D.set_complex_amplitude(complex_amplitude*normalization_factor)
+
+        return wavefront_2D
 
     # main parameters
 
