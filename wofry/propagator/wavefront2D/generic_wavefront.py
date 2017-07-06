@@ -109,7 +109,6 @@ class GenericWavefront2D(Wavefront):
         else:
             normalization_factor = 1.0
 
-
         wavefront_2D = GenericWavefront2D.initialize_wavefront_from_steps(x_start=wavefront_h.offset(),
                                                                           x_step=wavefront_h.delta(),
                                                                           y_start=wavefront_v.offset(),
@@ -120,7 +119,8 @@ class GenericWavefront2D(Wavefront):
 
         for i in range (0, wavefront_h.size()):
             for j in range (0, wavefront_v.size()):
-                complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j], 0.0)
+                complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j],
+                                                  wavefront_h.get_phase()[i] + wavefront_v.get_phase()[j])
 
         normalization_factor /= numpy.sum(numpy.abs(complex_amplitude))
 
@@ -172,6 +172,7 @@ class GenericWavefront2D(Wavefront):
             intensity /= intensity.max()
             bad_indices = numpy.where(intensity < from_minimum_intensity )
             phase[bad_indices] = 0.0
+
         return phase
 
     def get_intensity(self):
