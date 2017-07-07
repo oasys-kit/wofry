@@ -122,17 +122,17 @@ class GenericWavefront1D(Wavefront):
 
     # modifiers
 
-    def set_wavelength(self,wavelength):
+    def set_wavelength(self, wavelength):
         self._wavelength = wavelength
 
-    def set_wavenumber(self,wavenumber):
+    def set_wavenumber(self, wavenumber):
         self._wavelength = 2 * numpy.pi / wavenumber
 
-    def set_photon_energy(self,photon_energy):
+    def set_photon_energy(self, photon_energy):
         m2ev = codata.c * codata.h / codata.e      # lambda(m)  = m2eV / energy(eV)
         self._wavelength = m2ev / photon_energy
 
-    def set_complex_amplitude(self,complex_amplitude):
+    def set_complex_amplitude(self, complex_amplitude):
         if complex_amplitude.size != self._electric_field_array.size():
             raise Exception("Complex amplitude array has different dimension")
 
