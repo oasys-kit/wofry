@@ -6,6 +6,7 @@ from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 
 from wofry.elements.optical_elements.ideal_elements.lens import WOIdealLens, WOIdealLens1D
 
+
 do_plot = False
 
 #
@@ -150,6 +151,43 @@ class GenericWavefront1DTest(unittest.TestCase):
 
 
         numpy.testing.assert_almost_equal(wf1.get_phase(),wf2.get_phase(),5)
+
+    def test_gaussianhermite_mode(self,do_plot=do_plot):
+        #
+        # plane wave
+        #
+        print("#                                                             ")
+        print("# Tests for a 1D Gaussian Hermite mode                        ")
+        print("#                                                             ")
+
+        wavelength        = 1.24e-10
+
+
+        # 2D
+        sigma_x = 100e-6
+        mode_x = 0
+        npixels_x = 100
+
+
+        wavefront_length_x = 10*sigma_x
+
+        x = numpy.linspace(-0.5*wavefront_length_x,0.5*wavefront_length_x,npixels_x)
+
+
+        wf1 = GenericWavefront1D.initialize_wavefront_from_steps(
+                        x_start=x[0],x_step=numpy.abs(x[1]-x[0]),
+                        number_of_points=npixels_x,wavelength=wavelength)
+
+
+        wf1.set_gaussianhermite_mode(sigma_x,mode_x,amplitude=1.0)
+
+
+        numpy.testing.assert_almost_equal(wf1.get_amplitude()[30],23.9419082194,5)
+
+        if do_plot:
+            from srxraylib.plot.gol import plot
+            plot(wf1.get_abscissas(),wf1.get_amplitude(),title="Amplitude of gaussianhermite",show=0)
+
 
     def test_interpolator(self,do_plot=do_plot):
         #
@@ -366,6 +404,51 @@ class GenericWavefront2DTest(unittest.TestCase):
 
 
         numpy.testing.assert_almost_equal(wf1.get_phase(),wf2.get_phase(),5)
+
+    def test_gaussianhermite_mode(self,do_plot=do_plot):
+        #
+        # plane wave
+        #
+        print("#                                                             ")
+        print("# Tests for a 2D Gaussian Hermite mode                        ")
+        print("#                                                             ")
+
+        wavelength        = 1.24e-10
+
+
+        # 2D
+        sigma_x = 100e-6
+        mode_x = 0
+        npixels_x = 100
+        sigma_y = 50e-6
+        mode_y = 3
+        npixels_y = 100
+
+
+        wavefront_length_x = 10*sigma_x
+        wavefront_length_y = 10*sigma_y
+
+        x = numpy.linspace(-0.5*wavefront_length_x,0.5*wavefront_length_x,npixels_x)
+        y = numpy.linspace(-0.5*wavefront_length_y,0.5*wavefront_length_y,npixels_y)
+
+
+
+        wf1 = GenericWavefront2D.initialize_wavefront_from_steps(
+                        x_start=x[0],x_step=numpy.abs(x[1]-x[0]),
+                        y_start=y[0],y_step=numpy.abs(y[1]-y[0]),
+                        number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
+
+
+        wf1.set_gaussianhermite_mode(sigma_x,sigma_y,mode_x,mode_y,amplitude=1.0)
+
+
+        numpy.testing.assert_almost_equal(wf1.get_amplitude()[30,40],1383.76448118,3)
+
+        if do_plot:
+            from srxraylib.plot.gol import plot_image
+            plot_image(wf1.get_amplitude(),wf1.get_coordinate_x(),wf1.get_coordinate_y(),
+                       title="Amplitude of gaussianhermite mode",show=1)
+
 
 
     def test_interpolator(self,do_plot=do_plot):
