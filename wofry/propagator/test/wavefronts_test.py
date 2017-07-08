@@ -179,7 +179,7 @@ class GenericWavefront1DTest(unittest.TestCase):
                         number_of_points=npixels_x,wavelength=wavelength)
 
 
-        wf1.set_gaussianhermite_mode(sigma_x,mode_x,amplitude=1.0)
+        wf1.set_gaussian_hermite_mode(sigma_x, mode_x, amplitude=1.0)
 
 
         numpy.testing.assert_almost_equal(wf1.get_amplitude()[30],23.9419082194,5)
@@ -439,7 +439,7 @@ class GenericWavefront2DTest(unittest.TestCase):
                         number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
 
 
-        wf1.set_gaussianhermite_mode(sigma_x,sigma_y,mode_x,mode_y,amplitude=1.0)
+        wf1.set_gaussian_hermite_mode(sigma_x, sigma_y, mode_x, mode_y, amplitude=1.0)
 
 
         numpy.testing.assert_almost_equal(wf1.get_amplitude()[30,40],1383.76448118,3)

@@ -5,7 +5,7 @@ from srxraylib.util.data_structures import ScaledArray, ScaledMatrix
 
 from wofry.propagator.wavefront import Wavefront, WavefrontDimension
 
-from wofry.propagator.GaussianSchellModel import GaussianSchellModel1D
+from wofry.propagator.util.gaussian_schell_model import GaussianSchellModel1D
 
 # --------------------------------------------------
 # Wavefront 1D
@@ -151,16 +151,16 @@ class GenericWavefront1D(Wavefront):
                                                                                           (self._electric_field_array.scale ** 2) / (-2 * radius))
 
 
-    def set_gaussianhermite_mode(self, sigma_x, mode_x, amplitude=1.0):
-        a1D = GaussianSchellModel1D(amplitude,sigma_x,100.0*sigma_x)
+    def set_gaussian_hermite_mode(self, sigma_x, mode_x, amplitude=1.0):
+        a1D = GaussianSchellModel1D(amplitude, sigma_x, 100.0*sigma_x)
 
-        real_amplitude = a1D.phi(mode_x,self.get_abscissas())
+        real_amplitude = a1D.phi(mode_x, self.get_abscissas())
 
         self.set_complex_amplitude(real_amplitude)
 
     # note that amplitude is for "amplitude" not for intensity!
     def set_gaussian(self, sigma_x, amplitude=1.0):
-        self.set_gaussianhermite_mode(sigma_x,0,amplitude=amplitude)
+        self.set_gaussian_hermite_mode(sigma_x, 0, amplitude=amplitude)
 
     def add_phase_shift(self, phase_shift):
         self._electric_field_array.np_array *= numpy.exp(1.0j * phase_shift)
