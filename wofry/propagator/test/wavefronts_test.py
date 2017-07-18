@@ -4,7 +4,7 @@ import numpy
 from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 
-from wofry.elements.optical_elements.ideal_elements.lens import WOIdealLens, WOIdealLens1D
+from wofry.beamline.optical_elements.ideal_elements.lens import WOIdealLens, WOIdealLens1D
 
 
 do_plot = False

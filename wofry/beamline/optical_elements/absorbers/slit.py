@@ -4,7 +4,7 @@ import numpy
 from syned.beamline.optical_elements.absorbers.slit import Slit
 from syned.beamline.shape import BoundaryShape, Rectangle, Ellipse
 
-from wofry.elements.decorators import WOOpticalElementDecorator
+from wofry.beamline.decorators import WOOpticalElementDecorator
 
 class WOSlit(Slit, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):

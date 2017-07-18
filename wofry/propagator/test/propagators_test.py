@@ -23,9 +23,9 @@ from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 from wofry.propagator.propagator import PropagationManager, PropagationParameters
 
-from wofry.elements.optical_elements.absorbers.slit import WOSlit, WOSlit1D, WOGaussianSlit, WOGaussianSlit1D
-from wofry.elements.optical_elements.ideal_elements.screen import WOScreen
-from wofry.elements.optical_elements.ideal_elements.lens import WOIdealLens
+from wofry.beamline.optical_elements.absorbers.slit import WOSlit, WOSlit1D, WOGaussianSlit, WOGaussianSlit1D
+from wofry.beamline.optical_elements.ideal_elements.screen import WOScreen
+from wofry.beamline.optical_elements.ideal_elements.lens import WOIdealLens
 
 do_plot = True
 

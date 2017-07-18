@@ -2,7 +2,7 @@
 from syned.beamline.optical_elements.absorbers.beam_stopper import BeamStopper
 from syned.beamline.optical_elements.shape import BoundaryShape, Rectangle, Ellipse
 
-from wofry.elements.decorators import WOOpticalElementDecorator
+from wofry.beamline.decorators import WOOpticalElementDecorator
 
 class WOBeamStopper(BeamStopper, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
