@@ -24,7 +24,7 @@ class WOGaussianSlit(Slit, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront):
+    def applyOpticalElement(self, wavefront, parameters=None):
         boundaries = self._boundary_shape.get_boundaries()
         aperture_diameter_x =  numpy.abs(boundaries[1] - boundaries[0])
         aperture_diameter_y =  numpy.abs(boundaries[2] - boundaries[3])

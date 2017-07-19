@@ -162,7 +162,7 @@ class Propagator(AbstractPropagator):
             coordinates = element.get_coordinates()
 
             if coordinates.p() != 0.0: wavefront = self.do_specific_progation(wavefront, coordinates.p(), parameters)
-            wavefront = element.get_optical_element().applyOpticalElement(wavefront)
+            wavefront = element.get_optical_element().applyOpticalElement(wavefront, parameters)
             if coordinates.q() != 0.0: wavefront = self.do_specific_progation(wavefront, coordinates.q(), parameters)
 
         return wavefront

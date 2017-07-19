@@ -9,7 +9,7 @@ class WOIdealLens(IdealLens, WOOpticalElementDecorator):
     def __init__(self, name, focal_x, focal_y):
         IdealLens.__init__(self, name, focal_x, focal_y)
 
-    def applyOpticalElement(self, wavefront):
+    def applyOpticalElement(self, wavefront, parameters=None):
 
         focal_term = 0.0
 

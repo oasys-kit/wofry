@@ -22,7 +22,7 @@ class WOBeamStopper1D(BeamStopper, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         BeamStopper.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront):
+    def applyOpticalElement(self, wavefront, parameters=None):
         boundaries = self._boundary_shape.get_boundaries()
 
         if isinstance(self._boundary_shape, Rectangle):
