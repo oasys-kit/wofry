@@ -177,8 +177,8 @@ class Propagator1D(Propagator):
         return WavefrontDimension.ONE
 
     def do_propagation(self, parameters=PropagationParameters()):
-        if not isinstance(parameters.get_wavefront(), GenericWavefront1D):
-            raise Exception("wrong wavefront!  it is not" + GenericWavefront1D.__name__)
+        if not parameters.get_wavefront().get_dimension() == WavefrontDimension.ONE:
+            raise Exception("wrong wavefront!  it is not 1D")
 
         return super().do_propagation(parameters)
 
@@ -188,8 +188,8 @@ class Propagator2D(Propagator):
         return WavefrontDimension.TWO
 
     def do_propagation(self, parameters=PropagationParameters()):
-        if not isinstance(parameters.get_wavefront(), GenericWavefront2D):
-             raise Exception("wrong wavefront!  it is not" + GenericWavefront2D.__name__)
+        if not parameters.get_wavefront().get_dimension() == WavefrontDimension.TWO:
+            raise Exception("wrong wavefront!  it is not 2D")
 
         return super().do_propagation(parameters)
 

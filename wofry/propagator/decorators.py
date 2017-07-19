@@ -1,9 +1,12 @@
 
 class WavefrontDecorator():
 
+    def get_dimension(self):
+        raise NotImplementedError()
+
     def toGenericWavefront(self):
-        pass
+        raise NotImplementedError()
 
     @classmethod
     def fromGenericWavefront(cls, wavefront):
-        pass
+        raise NotImplementedError()
