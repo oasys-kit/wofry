@@ -131,8 +131,6 @@ class PropagationManager(object):
 
         dimension = propagator.get_dimension()
 
-        print(dimension)
-
         if not (dimension == WavefrontDimension.ONE or dimension == WavefrontDimension.TWO):
             raise ValueError("Wrong propagator dimension")
 
