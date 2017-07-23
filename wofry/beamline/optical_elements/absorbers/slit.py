@@ -10,7 +10,7 @@ class WOSlit(Slit, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront):
+    def applyOpticalElement(self, wavefront, parameters=None):
         boundaries = self._boundary_shape.get_boundaries()
 
         if isinstance(self._boundary_shape, Rectangle):
@@ -40,7 +40,7 @@ class WOSlit1D(Slit, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront):
+    def applyOpticalElement(self, wavefront, parameters=None):
         boundaries = self._boundary_shape.get_boundaries()
 
         if isinstance(self._boundary_shape, Rectangle):
@@ -54,7 +54,7 @@ class WOGaussianSlit1D(Slit, WOOpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront):
+    def applyOpticalElement(self, wavefront, parameters=None):
         boundaries = self._boundary_shape.get_boundaries()
         aperture_diameter =  numpy.abs(boundaries[1] - boundaries[0])
         X = wavefront.get_abscissas()
