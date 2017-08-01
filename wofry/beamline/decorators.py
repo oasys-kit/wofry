@@ -1,14 +1,14 @@
 
 from wofry.propagator.wavefront import Wavefront
 
-class WOLightSourceDecorator():
+class LightSourceDecorator():
 
     def get_wavefront(self, wavefront_parameters):
         raise NotImplementedError("This method should be specialized by specific implementors" +
                                   "\n\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)
 
 
-class WOOpticalElementDecorator(object):
+class OpticalElementDecorator(object):
 
     def __init__(self):
         super().__init__()
