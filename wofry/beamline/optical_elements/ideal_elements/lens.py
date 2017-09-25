@@ -3,9 +3,9 @@ Represents an ideal lens.
 """
 
 from syned.beamline.optical_elements.ideal_elements.lens import IdealLens
-from wofry.beamline.decorators import WOOpticalElementDecorator
+from wofry.beamline.decorators import OpticalElementDecorator
 
-class WOIdealLens(IdealLens, WOOpticalElementDecorator):
+class WOIdealLens(IdealLens, OpticalElementDecorator):
     def __init__(self, name, focal_x, focal_y):
         IdealLens.__init__(self, name, focal_x, focal_y)
 
