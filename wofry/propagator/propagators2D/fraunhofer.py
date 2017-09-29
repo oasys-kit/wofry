@@ -25,6 +25,12 @@ class Fraunhofer2D(Propagator2D):
     :return: a new 2D wavefront object with propagated wavefront
     """
 
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
         if not parameters.has_additional_parameter("shift_half_pixel"):
             raise ValueError("Missing Parameter shift_half_pixel")

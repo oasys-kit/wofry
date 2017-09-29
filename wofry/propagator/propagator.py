@@ -159,14 +159,18 @@ class Propagator(AbstractPropagator):
         for element in parameters.get_PropagationElements().get_propagation_elements():
             coordinates = element.get_coordinates()
 
-            if coordinates.p() != 0.0: wavefront = self.do_specific_progation(wavefront, coordinates.p(), parameters)
+            if coordinates.p() != 0.0: wavefront = self.do_specific_progation_before(wavefront, coordinates.p(), parameters)
             wavefront = element.get_optical_element().applyOpticalElement(wavefront, parameters)
-            if coordinates.q() != 0.0: wavefront = self.do_specific_progation(wavefront, coordinates.q(), parameters)
+            if coordinates.q() != 0.0: wavefront = self.do_specific_progation_after(wavefront, coordinates.q(), parameters)
 
         return wavefront
 
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
         raise NotImplementedError("This method is abstract")
+
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters):
+        raise NotImplementedError("This method is abstract")
+
 
 
 class Propagator1D(Propagator):

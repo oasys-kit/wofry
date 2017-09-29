@@ -14,6 +14,12 @@ class Integral2D(Propagator2D):
     def get_handler_name(self):
         return self.HANDLER_NAME
 
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+
     """
     2D Fresnel-Kirchhoff propagator via simplified integral
 
