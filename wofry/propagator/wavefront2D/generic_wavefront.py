@@ -165,7 +165,19 @@ class GenericWavefront2D(Wavefront):
     def get_amplitude(self):
         return numpy.absolute(self.get_complex_amplitude())
 
-    def get_phase(self,from_minimum_intensity=0.0):
+    def get_phase(self,from_minimum_intensity=0.0,unwrap=0):
+        """
+
+        :param from_minimum_intensity: set to zero phase values at pixels where intensity
+                                        is less than from_minimum_intensity threshold
+        :param unwrap: Flag to unwrap the returned phase:
+            0: No unwrap (default)
+            1: Unwrap only in Horizontal axis.
+            2: Unwrap only in Vertical axis.
+            3: Unwrap first in H, then in V.
+            4: Unwrap first in V, then in H.
+        :return: the phase in a numpy array
+        """
         # return numpy.arctan2(numpy.imag(self.get_complex_amplitude()), numpy.real(self.get_complex_amplitude()))
         phase = numpy.angle( self.get_complex_amplitude() )
 
@@ -174,6 +186,18 @@ class GenericWavefront2D(Wavefront):
             intensity /= intensity.max()
             bad_indices = numpy.where(intensity < from_minimum_intensity )
             phase[bad_indices] = 0.0
+
+        if unwrap > 0:
+            if unwrap == 1: # x only
+                phase = numpy.unwrap(phase,axis=0)
+            elif unwrap == 2: # y only
+                phase = numpy.unwrap(phase,axis=1)
+            elif unwrap == 3: # x and y
+                phase = numpy.unwrap(numpy.unwrap(phase,axis=0),axis=1)
+            elif unwrap == 4: # y and x
+                phase = numpy.unwrap(numpy.unwrap(phase,axis=1),axis=0)
+            else:
+                raise Exception(NotImplemented)
 
         return phase
 
