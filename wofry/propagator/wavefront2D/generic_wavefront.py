@@ -420,6 +420,59 @@ class GenericWavefront2D(Wavefront):
 
         self.rescale_amplitudes(window)
 
+    def is_identical(self,wfr,decimal=7):
+        from numpy.testing import assert_array_almost_equal
+        try:
+            assert_array_almost_equal(self.get_complex_amplitude(),wfr.get_complex_amplitude(),decimal)
+            assert_array_almost_equal(self.get_coordinate_x(),wfr.get_coordinate_x(),decimal)
+            assert_array_almost_equal(self.get_coordinate_y(),wfr.get_coordinate_y(),decimal)
+            assert_array_almost_equal(self.get_photon_energy(),wfr.get_photon_energy(),decimal)
+        except:
+            return False
+
+        return True
 
 
+    def save_h5_file(self,filename,prefix="",intensity=True,phase=True,complex_amplitude=True):
+
+        try:
+            import h5py
+
+            f = h5py.File(filename, 'w')
+
+            f[prefix+"_dimension"] = 2
+            f[prefix+"_photon_energy"] = self.get_photon_energy()
+            f[prefix+"_x"] = self.get_coordinate_x()
+            f[prefix+"_y"] = self.get_coordinate_y()
+
+            if intensity:
+                f[prefix+"_intensity"] = self.get_intensity()
+
+            if phase:
+                f[prefix+"_phase"] = self.get_phase()
+
+            if complex_amplitude:
+                ca = self.get_complex_amplitude()
+                f[prefix+"_complexamplitude_sigma"] = ca
+                f[prefix+"_complexamplitude_pi"] = numpy.zeros_like(ca)
+
+            print("File written to disk: "+filename)
+            f.close()
+        except:
+            raise Exception("Failed to save 2D wavefront to h5 file: "+filename)
+
+    @classmethod
+    def load_h5_file(cls,filename,prefix=""):
+
+        try:
+            import h5py
+
+            f = h5py.File(filename, 'r')
+            wfr = cls.initialize_wavefront_from_arrays(x_array=f[prefix+"_x"].value, y_array=f[prefix+"_y"].value,
+                                                  z_array=f[prefix+"_complexamplitude_sigma"].value)
+            wfr.set_photon_energy(f[prefix+"_photon_energy"].value)
+            f.close()
+            return wfr
+        except:
+            raise Exception("Failed to load 2D wavefront to h5 file: "+filename)
 

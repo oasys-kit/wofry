@@ -228,6 +228,14 @@ class GenericWavefront1DTest(unittest.TestCase):
             plot(xx,yy,title="interpolated on same grid",show=1)
 
 
+    def test_save_load_h5_file(self):
+        wfr = GenericWavefront1D.initialize_wavefront_from_range(-2.0,2.0,number_of_points=100)
+        wfr.set_gaussian(.2,amplitude=5+8j)
+        wfr.save_h5_file("tmp.h5")
+
+        wfr2  = GenericWavefront1D.load_h5_file("tmp.h5")
+
+        assert(wfr2.is_identical(wfr))
 #
 # 2D tests
 #
@@ -485,7 +493,7 @@ class GenericWavefront2DTest(unittest.TestCase):
         self.assertAlmostEqual(wf.get_interpolated_complex_amplitude(x1,y1).imag,z1.imag,4)
         #
         print("intensity  at (%g,%g):   %g (exact=%g)"%(x1,y1,wf.get_interpolated_intensity(x1,y1),numpy.abs(z1)**2))
-        self.assertAlmostEqual(wf.get_interpolated_intensity(x1,y1),numpy.abs(z1)**2,4)
+        self.assertAlmostEqual(wf.get_interpolated_intensity(x1,y1),numpy.abs(z1)**2,3)
 
         # interpolate on same grid
 
@@ -524,7 +532,14 @@ class GenericWavefront2DTest(unittest.TestCase):
 
 
 
+    def test_save_load_h5_file(self):
+        wfr = GenericWavefront2D.initialize_wavefront_from_range(-2.0,2.0,-1.0,1.0,number_of_points=(100,100))
+        wfr.set_gaussian(.2,.1,amplitude=5+8j)
+        wfr.save_h5_file("tmp.h5")
 
+        wfr2  = GenericWavefront2D.load_h5_file("tmp.h5")
+
+        assert(wfr2.is_identical(wfr))
 
 
 
