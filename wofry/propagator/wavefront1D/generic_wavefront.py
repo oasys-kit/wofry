@@ -79,14 +79,15 @@ class GenericWavefront1D(Wavefront):
     def get_amplitude(self):
         return numpy.absolute(self.get_complex_amplitude())
 
-    def get_phase(self,from_minimum_intensity=0.0):
+    def get_phase(self,from_minimum_intensity=0.0,unwrap=0):
         phase = numpy.angle(self.get_complex_amplitude())
         if (from_minimum_intensity > 0.0):
             intensity = self.get_intensity()
             intensity /= intensity.max()
             bad_indices = numpy.where(intensity < from_minimum_intensity )
             phase[bad_indices] = 0.0
-
+        if unwrap:
+            phase = numpy.unwrap(phase)
         return phase
 
     def get_intensity(self):
