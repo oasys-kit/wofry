@@ -2,16 +2,18 @@ import unittest
 import numpy
 
 # TODO: REMOVE THIS!!!!
-try:
-    from srwlib import *
-    SRWLIB_AVAILABLE = True
-except:
-    try:
-        from wpg.srwlib import *
-        SRWLIB_AVAILABLE = True
-    except:
-        SRWLIB_AVAILABLE = False
-        print("SRW is not available")
+# try:
+#     from srwlib import *
+#     SRWLIB_AVAILABLE = True
+# except:
+#     try:
+#         from wpg.srwlib import *
+#         SRWLIB_AVAILABLE = True
+#     except:
+#         SRWLIB_AVAILABLE = False
+#         print("SRW is not available")
+
+SRWLIB_AVAILABLE = False
 
 from syned.beamline.shape import Rectangle, Ellipse
 from syned.beamline.element_coordinates import ElementCoordinates
@@ -27,7 +29,7 @@ from wofry.beamline.optical_elements.absorbers.slit import WOSlit, WOSlit1D, WOG
 from wofry.beamline.optical_elements.ideal_elements.screen import WOScreen
 from wofry.beamline.optical_elements.ideal_elements.lens import WOIdealLens
 
-do_plot = True
+do_plot = False
 
 if do_plot:
     from srxraylib.plot.gol import plot,plot_image,plot_table
@@ -37,16 +39,18 @@ from wofry.propagator.propagators2D.fraunhofer import Fraunhofer2D
 from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D
 from wofry.propagator.propagators2D.integral import Integral2D
 from wofry.propagator.propagators2D import initialize_default_propagator_2D
+from wofry.propagator.propagators2D.fresnel_zoom_xy import FresnelZoomXY2D
+from wofry.propagator.propagators1D.fresnel_zoom_xy import FresnelZoomXY1D
 
 from wofry.propagator.propagators1D.fraunhofer import Fraunhofer1D
 from wofry.propagator.propagators1D.fresnel import Fresnel1D, FresnelConvolution1D
 from wofry.propagator.propagators1D.integral import Integral1D
 from wofry.propagator.propagators1D import initialize_default_propagator_1D
 
-try:
-    from wofry.propagator.test.propagators.srw_fresnel import FresnelSRW
-except:
-    print("FresnelSRW is not available")
+# try:
+#     from wofry.propagator.test.propagators.srw_fresnel import FresnelSRW
+# except:
+#     print("FresnelSRW is not available")
 
 propagator = PropagationManager.Instance()
 initialize_default_propagator_2D()
@@ -118,6 +122,7 @@ class propagatorTest(unittest.TestCase):
     #                                   'fraunhofer':
     #                                   'fft': fft -> multiply by kernel in freq -> ifft
     #                                   'convolution': scipy.signal.fftconvolve(wave,kernel in space)
+    #                                   'zoom': fft -> multiply by kernel in freq -> ifft
     # valid apertute_type: square, gaussian
 
     def propagate_1D(self,do_plot=do_plot,method='fft',
@@ -166,6 +171,9 @@ class propagatorTest(unittest.TestCase):
         elif method == 'fraunhofer':
             propagation_parameters.set_additional_parameters("shift_half_pixel", True)
             wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer1D.HANDLER_NAME)
+        elif method == 'zoom':
+            propagation_parameters.set_additional_parameters("magnification_x", 1.5)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelZoomXY1D.HANDLER_NAME)
         else:
             raise Exception("Not implemented method: %s"%method)
 
@@ -239,6 +247,28 @@ class propagatorTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
+    def test_propagate_1D_fft_zoom(self,do_plot=do_plot):
+
+        aperture_type="square"
+        aperture_diameter = 40e-6
+        wavefront_length = 800e-6
+        wavelength = 1.24e-10
+        propagation_distance = 30.0
+        npoints=1024
+
+        print("\n#                                                            ")
+        print("# fft zoom diffraction from a %s aperture  "%aperture_type)
+        print("#                                                            ")
+
+
+
+        angle, intensity_calculated,intensity_theory = self.propagate_1D(do_plot=do_plot,method="zoom",
+                                wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
+                                wavefront_length=wavefront_length,npoints=npoints,
+                                propagation_distance = propagation_distance, show=1)
+
+        numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
+
 
     def test_propagate_1D_fresnel_convolution(self,do_plot=do_plot):
 
@@ -261,6 +291,8 @@ class propagatorTest(unittest.TestCase):
                                 propagation_distance = propagation_distance, show=1)
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
+
+
 
     def test_propagate_1D_integral(self,do_plot=do_plot):
 
@@ -355,6 +387,11 @@ class propagator2DTest(unittest.TestCase):
         elif method == 'srw':
             propagation_parameters.set_additional_parameters("srw_autosetting", 0)
             wf1 = propagator.do_propagation(propagation_parameters, FresnelSRW.HANDLER_NAME)
+        elif method == 'zoom':
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            propagation_parameters.set_additional_parameters("magnification_x", 2.0)
+            propagation_parameters.set_additional_parameters("magnification_y", 0.5)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelZoomXY2D.HANDLER_NAME)
         else:
             raise Exception("Not implemented method: %s"%method)
 
@@ -462,6 +499,11 @@ class propagator2DTest(unittest.TestCase):
         elif method == 'fraunhofer':
             propagation_parameters.set_additional_parameters("shift_half_pixel", True)
             wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer2D.HANDLER_NAME)
+        elif method == 'zoom':
+            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+            propagation_parameters.set_additional_parameters("magnification_x", 1.5)
+            propagation_parameters.set_additional_parameters("magnification_y", 2.5)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelZoomXY2D.HANDLER_NAME)
         else:
             raise Exception("Not implemented method: %s"%method)
 
@@ -627,6 +669,11 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
+    def test_propagate_2D_zoom_square(self):
+        xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='zoom',aperture_type='square',
+                                aperture_diameter=40e-6,
+                                pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
+                                propagation_distance=30.0,wavelength=1.24e-10)
     def test_lens(self):
 
         lens_diameter = 0.002
@@ -655,11 +702,17 @@ class propagator2DTest(unittest.TestCase):
                                 pixelsize_x=pixelsize_x,npixels_x=npixels_x,pixelsize_y=pixelsize_y,npixels_y=npixels_y,
                                 propagation_distance = propagation_distance, defocus_factor=defocus_factor)
 
+        x_zoom, y_zoom = self.propagation_with_lens(do_plot=0,method='zoom',
+                                propagation_steps=propagation_steps,
+                                wavelength=wavelength,
+                                pixelsize_x=pixelsize_x,npixels_x=npixels_x,pixelsize_y=pixelsize_y,npixels_y=npixels_y,
+                                propagation_distance = propagation_distance, defocus_factor=defocus_factor)
+
         if do_plot:
             x = x_fft
-            y = numpy.vstack((y_fft,y_convolution))
+            y = numpy.vstack((y_fft,y_convolution,y_zoom))
 
-            plot_table(1e6*x,y,legend=["fft","convolution"],ytitle="Intensity",xtitle="x coordinate [um]",
+            plot_table(1e6*x,y,legend=["fft","convolution","zoom"],ytitle="Intensity",xtitle="x coordinate [um]",
                        title="Comparison 1:1 focusing")
 
         numpy.testing.assert_almost_equal(y_fft,y_convolution,1)

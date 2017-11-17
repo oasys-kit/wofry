@@ -22,15 +22,15 @@ class GenericWavefront1D(Wavefront):
 
     def duplicate(self):
         return GenericWavefront1D(wavelength=self._wavelength,
-                                  electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_matrix.np_array),
-                                                                   scale=copy.copy(self._electric_field_matrix.scale)))
+                                  electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_array.np_array),
+                                                                   scale=copy.copy(self._electric_field_array.scale)))
 
     @classmethod
     def initialize_wavefront(cls, wavelength=1e-10, number_of_points=1000):
         return GenericWavefront1D(wavelength, ScaledArray.initialize(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex)))
 
     @classmethod
-    def initialize_wavefront_from_steps(cls, x_start=0.0, x_step=0.0, number_of_points=1000, wavelength=1e-10):
+    def initialize_wavefront_from_steps(cls, x_start=-1.0, x_step=0.002, number_of_points=1000, wavelength=1e-10):
         return GenericWavefront1D(wavelength, ScaledArray.initialize_from_steps(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex),
                                                                          initial_scale_value=x_start,
                                                                          scale_step=x_step))
@@ -255,3 +255,6 @@ class GenericWavefront1D(Wavefront):
         except:
             raise Exception("Failed to load 1D wavefront to h5 file: "+filename)
 
+if __name__ == "__main__":
+    w = GenericWavefront1D.initialize_wavefront_from_steps()
+    w2 = w.duplicate()

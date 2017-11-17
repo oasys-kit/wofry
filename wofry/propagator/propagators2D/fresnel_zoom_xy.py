@@ -59,44 +59,9 @@ class FresnelZoomXY2D(Propagator2D):
 
         wavelength = wavefront.get_wavelength()
 
-        #
-        # convolving with the Fresnel kernel via FFT multiplication
-        #
-        # fft = numpy.fft.fft2(wavefront.get_complex_amplitude())
-        #
-        # # frequency for axis 1
-        # shape = wavefront.size()
-        # delta = wavefront.delta()
-        #
-        # pixelsize = delta[0] # p_x[1] - p_x[0]
-        # npixels = shape[0]
-        # freq_nyquist = 0.5/pixelsize
-        # freq_n = numpy.linspace(-1.0,1.0,npixels)
-        # freq_x = freq_n * freq_nyquist
-        #
-        # # frequency for axis 2
-        # pixelsize = delta[1]
-        # npixels = shape[1]
-        # freq_nyquist = 0.5/pixelsize
-        # freq_n = numpy.linspace(-1.0,1.0,npixels)
-        # freq_y = freq_n * freq_nyquist
-        #
-        # if shift_half_pixel:
-        #     freq_x = freq_x - 0.5 * numpy.abs(freq_x[1] - freq_x[0])
-        #     freq_y = freq_y - 0.5 * numpy.abs(freq_y[1] - freq_y[0])
-        #
-        # freq_xy = numpy.array(numpy.meshgrid(freq_y,freq_x))
-        # fft *= numpy.exp((-1.0j) * numpy.pi * wavelength * propagation_distance *
-        #               numpy.fft.fftshift(freq_xy[0]*freq_xy[0] + freq_xy[1]*freq_xy[1]) )
-
-        #===============
 
         wavenumber = wavefront.get_wavenumber()
-        # wavelength = wavefront.get_wavelength()
 
-        # frequency for axis 1
-
-        #TODO
         m_x = parameters.get_additional_parameter("magnification_x")
         m_y = parameters.get_additional_parameter("magnification_y")
 
