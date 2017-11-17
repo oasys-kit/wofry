@@ -65,8 +65,6 @@ class FresnelZoomXY2D(Propagator2D):
         m_x = parameters.get_additional_parameter("magnification_x")
         m_y = parameters.get_additional_parameter("magnification_y")
 
-        print(">>>>>>>> mx, my",m_x,m_y)
-
         shape = wavefront.size()
         delta = wavefront.delta()
 

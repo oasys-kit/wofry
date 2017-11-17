@@ -5,9 +5,9 @@ import numpy
 from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 from wofry.propagator.propagator import Propagator1D
 
-class FresnelZoomXY1D(Propagator1D):
+class FresnelZoom1D(Propagator1D):
 
-    HANDLER_NAME = "FRESNEL_ZOOM_XY_1D"
+    HANDLER_NAME = "FRESNEL_ZOOM_1D"
 
     def get_handler_name(self):
         return self.HANDLER_NAME
