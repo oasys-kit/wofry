@@ -173,7 +173,7 @@ class propagatorTest(unittest.TestCase):
             wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer1D.HANDLER_NAME)
         elif method == 'zoom':
             propagation_parameters.set_additional_parameters("magnification_x", 1.5)
-            wf1 = propagator.do_propagation(propagation_parameters, FresnelZoomXY1D.HANDLER_NAME)
+            wf1 = propagator.do_propagation(propagation_parameters, FresnelZoom1D.HANDLER_NAME)
         else:
             raise Exception("Not implemented method: %s"%method)
 

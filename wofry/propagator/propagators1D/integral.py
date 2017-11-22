@@ -25,7 +25,7 @@ class Integral1D(Propagator1D):
                             it uses the same abscissas present in input wavefront.
     :return: a new 1D wavefront object with propagated wavefront
     """
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
+    def do_specific_progation(self, wavefront, propagation_distance, parameters, method=0):
         if not parameters.has_additional_parameter("detector_abscissas"):
             detector_abscissas = [None]
         else:
@@ -34,15 +34,26 @@ class Integral1D(Propagator1D):
         if detector_abscissas[0] == None:
             detector_abscissas = wavefront.get_abscissas()
 
-        # calculate via outer product, it spreads over a lot of memory, but it is OK for 1D
-        x1 = numpy.outer(wavefront.get_abscissas(),numpy.ones(detector_abscissas.size))
-        x2 = numpy.outer(numpy.ones(wavefront.size()),detector_abscissas)
-        r = numpy.sqrt( numpy.power(x1-x2,2) + numpy.power(propagation_distance,2) )
         wavenumber = numpy.pi*2/wavefront.get_wavelength()
-        distances_matrix  = numpy.exp(1.j * wavenumber *  r)
 
+        if method == 0:
+            # calculate via loop pver detector coordinates
+            x1 = wavefront.get_abscissas()
+            x2 = detector_abscissas
+            fieldComplexAmplitude = numpy.zeros_like(x2,dtype=complex)
+            for ix,x in enumerate(x2):
+                r = numpy.sqrt( numpy.power(x1-x,2) + numpy.power(propagation_distance,2) )
+                distances_array  = numpy.exp(1.j * wavenumber *  r)
+                fieldComplexAmplitude[ix] = (wavefront.get_complex_amplitude() * distances_array).sum()
+        elif method == 1:
+            # calculate via outer product, it spreads over a lot of memory, but it is OK for 1D
+            x1 = numpy.outer(wavefront.get_abscissas(),numpy.ones(detector_abscissas.size))
+            x2 = numpy.outer(numpy.ones(wavefront.size()),detector_abscissas)
+            r = numpy.sqrt( numpy.power(x1-x2,2) + numpy.power(propagation_distance,2) )
 
-        fieldComplexAmplitude = numpy.dot(wavefront.get_complex_amplitude(),distances_matrix)
+            distances_matrix  = numpy.exp(1.j * wavenumber *  r)
+            fieldComplexAmplitude = numpy.dot(wavefront.get_complex_amplitude(),distances_matrix)
+
 
         return GenericWavefront1D(wavefront.get_wavelength(), ScaledArray.initialize_from_steps(fieldComplexAmplitude,
                                                                                                 detector_abscissas[0],
