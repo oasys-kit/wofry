@@ -166,10 +166,10 @@ class propagatorTest(unittest.TestCase):
         elif method == 'convolution':
             wf1 = propagator.do_propagation(propagation_parameters, FresnelConvolution1D.HANDLER_NAME)
         elif method == 'integral':
-            propagation_parameters.set_additional_parameters("detector_abscissas", [None])
+            propagation_parameters.set_additional_parameters("magnification_x", 1.5)
+            propagation_parameters.set_additional_parameters("magnification_N", 2.0)
             wf1 = propagator.do_propagation(propagation_parameters, Integral1D.HANDLER_NAME)
         elif method == 'fraunhofer':
-            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
             wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer1D.HANDLER_NAME)
         elif method == 'zoom':
             propagation_parameters.set_additional_parameters("magnification_x", 1.5)

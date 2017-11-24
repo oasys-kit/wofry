@@ -17,24 +17,26 @@ class Integral1D(Propagator1D):
     def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
         return self.do_specific_progation(wavefront, propagation_distance, parameters)
 
-    """
-    1D Fresnel-Kirchhoff propagator via simplified integral
-    :param wavefront:
-    :param propagation_distance: propagation distance
-    :param detector_abscissas: a numpy array with the anscissas at the image position. If undefined ([None])
-                            it uses the same abscissas present in input wavefront.
-    :return: a new 1D wavefront object with propagated wavefront
-    """
-    def do_specific_progation(self, wavefront, propagation_distance, parameters, method=0):
-        if not parameters.has_additional_parameter("detector_abscissas"):
-            detector_abscissas = [None]
-        else:
-            detector_abscissas = parameters.get_additional_parameter("detector_abscissas")
+    # 1D Fresnel-Kirchhoff propagator via simplified integral
+    def do_specific_progation(self, wavefront, propagation_distance, parameters):
 
-        if detector_abscissas[0] == None:
-            detector_abscissas = wavefront.get_abscissas()
+        mX = parameters.get_additional_parameter("magnification_x")
+
+        mN = parameters.get_additional_parameter("magnification_N")
+
+        method = 0
 
         wavenumber = numpy.pi*2/wavefront.get_wavelength()
+
+        x = wavefront.get_abscissas()
+
+
+        if mN != 1.0:
+            npoints_exit = int(mN * x.size)
+        else:
+            npoints_exit = x.size
+
+        detector_abscissas = numpy.linspace(mX*x[0],mX*x[-1],npoints_exit)
 
         if method == 0:
             # calculate via loop pver detector coordinates
@@ -53,7 +55,6 @@ class Integral1D(Propagator1D):
 
             distances_matrix  = numpy.exp(1.j * wavenumber *  r)
             fieldComplexAmplitude = numpy.dot(wavefront.get_complex_amplitude(),distances_matrix)
-
 
         return GenericWavefront1D(wavefront.get_wavelength(), ScaledArray.initialize_from_steps(fieldComplexAmplitude,
                                                                                                 detector_abscissas[0],
