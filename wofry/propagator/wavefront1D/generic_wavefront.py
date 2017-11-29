@@ -22,8 +22,8 @@ class GenericWavefront1D(Wavefront):
 
     def duplicate(self):
         return GenericWavefront1D(wavelength=self._wavelength,
-                                  electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_matrix.np_array),
-                                                                   scale=copy.copy(self._electric_field_matrix.scale)))
+                                  electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_array.np_array),
+                                                                   scale=copy.copy(self._electric_field_array.scale)))
 
     @classmethod
     def initialize_wavefront(cls, wavelength=1e-10, number_of_points=1000):
