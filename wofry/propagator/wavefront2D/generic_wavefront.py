@@ -117,16 +117,18 @@ class GenericWavefront2D(Wavefront):
                                                                           y_step=wavefront_v.delta(),
                                                                           number_of_points=(wavefront_h.size(), wavefront_v.size()))
 
-        complex_amplitude =  numpy.zeros((wavefront_h.size(), wavefront_v.size()), dtype=complex)
+        # complex_amplitude =  numpy.zeros((wavefront_h.size(), wavefront_v.size()), dtype=complex)
+        #
+        # for i in range (0, wavefront_h.size()):
+        #     for j in range (0, wavefront_v.size()):
+        #         complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j],
+        #                                           wavefront_h.get_phase()[i] + wavefront_v.get_phase()[j])
 
-        for i in range (0, wavefront_h.size()):
-            for j in range (0, wavefront_v.size()):
-                complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j],
-                                                  wavefront_h.get_phase()[i] + wavefront_v.get_phase()[j])
+        complex_amplitude = numpy.outer(wavefront_h.get_complex_amplitude(), wavefront_v.get_complex_amplitude())
 
         normalization_factor /= numpy.sum(numpy.abs(complex_amplitude))
 
-        wavefront_2D.set_complex_amplitude(complex_amplitude*normalization_factor)
+        wavefront_2D.set_complex_amplitude(complex_amplitude * normalization_factor)
 
         return wavefront_2D
 
