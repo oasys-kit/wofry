@@ -37,7 +37,7 @@ class FresnelZoom1D(Propagator1D):
         x_rescaling = wavefront.get_abscissas() * m
 
         r1sq = x ** 2 * (1 - m)
-        r2sq = x_rescaling ** 2 * (m - 1 / m)
+        r2sq = x_rescaling ** 2 * ((m - 1) / m)
         fsq = (fft_scale ** 2 / m)
 
         Q1 = wavenumber / 2 / propagation_distance * r1sq

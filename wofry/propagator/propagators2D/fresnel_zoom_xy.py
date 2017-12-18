@@ -95,7 +95,7 @@ class FresnelZoomXY2D(Propagator2D):
         y_rescaling = wavefront.get_mesh_y() * m_y
 
         r1sq = x ** 2 * (1 - m_x) + y ** 2 * (1 - m_y)
-        r2sq = x_rescaling ** 2 * (m_x - 1 / m_x) + y_rescaling ** 2 * (m_y - 1 / m_y)
+        r2sq = x_rescaling ** 2 * ((m_x - 1) / m_x) + y_rescaling ** 2 * ((m_y - 1) / m_y)
 
         Q1 = wavenumber / 2 / propagation_distance * r1sq
         Q2 = numpy.exp(-1.0j * numpy.pi * wavelength * propagation_distance * fsq)
@@ -105,7 +105,7 @@ class FresnelZoomXY2D(Propagator2D):
 
         fft = numpy.fft.fft2(wavefront.get_complex_amplitude())
 
-        #TODO check intensities....
+        # TODO check intensities....
         ifft = numpy.fft.ifft2(fft * Q2) * Q3 / numpy.sqrt(m_x * m_y)
 
         # wf_propagated = Wavefront2D.initialize_wavefront_from_arrays(wavefront.get_coordinate_x() * m_x,

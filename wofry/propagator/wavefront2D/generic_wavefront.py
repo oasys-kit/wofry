@@ -81,18 +81,19 @@ class GenericWavefront2D(Wavefront):
 
 
     def get_Wavefront1D_from_profile(self, axis, coordinate):
-        if axis == 0: # fixed X
+        # swap axis - changed giovanni+manuel
+        if axis == 1: # fixed X
             index = numpy.argmin(numpy.abs(self._electric_field_matrix.x_coord - coordinate))
 
             return GenericWavefront1D(wavelength=self._wavelength,
                                       electric_field_array=ScaledArray(scale=self._electric_field_matrix.y_coord,
-                                                                       np_array=self._electric_field_matrix.z_values[index][:]))
-        elif axis == 1:
+                                                                       np_array=self._electric_field_matrix.z_values[index, :]))
+        elif axis == 0:
             index = numpy.argmin(numpy.abs(self._electric_field_matrix.y_coord - coordinate))
 
             return GenericWavefront1D(wavelength=self._wavelength,
                                       electric_field_array=ScaledArray(scale=self._electric_field_matrix.x_coord,
-                                                                       np_array=self._electric_field_matrix.z_values[:][index]))
+                                                                       np_array=self._electric_field_matrix.z_values[:, index]))
 
     #TODO
     def get_Wavefront1D_from_histogram(self, axis):
