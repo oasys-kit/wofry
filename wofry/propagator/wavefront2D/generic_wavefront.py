@@ -298,15 +298,18 @@ class GenericWavefront2D(Wavefront):
             raise Exception("Incompatible shape")
         self._electric_field_matrix.set_z_values(complex_amplitude)
 
+    # TODO: add inclination like for 1D
     def set_plane_wave_from_complex_amplitude(self, complex_amplitude=(1.0 + 0.0j)):
         new_value = self._electric_field_matrix.get_z_values()
         new_value *= 0.0
         new_value += complex_amplitude
         self._electric_field_matrix.set_z_values(new_value)
 
+    # TODO: add inclination like for 1D
     def set_plane_wave_from_amplitude_and_phase(self, amplitude=1.0, phase=0.0):
         self.set_plane_wave_from_complex_amplitude(amplitude*numpy.cos(phase) + 1.0j*amplitude*numpy.sin(phase))
 
+    # TODO: add center like for 1D
     def set_spherical_wave(self,  radius=1.0, complex_amplitude=1.0,):
         """
 
@@ -316,8 +319,9 @@ class GenericWavefront2D(Wavefront):
         """
         if radius == 0:
             raise Exception("Radius cannot be zero")
-        new_value = (complex_amplitude/(-radius))*numpy.exp(-1.0j * self.get_wavenumber() *
-                                (self.get_mesh_x()**2+self.get_mesh_y()**2)/(-2*radius))
+        new_value = complex_amplitude * numpy.exp( -1.0j * self.get_wavenumber() *
+                                (self.get_mesh_x()**2 + self.get_mesh_y()**2) / (-2*radius) )
+
         # new_value = numpy.exp(-1.0j * self.get_wavenumber() *
         #                         (self.get_mesh_x()**2+self.get_mesh_y()**2)/(-2*radius))
         self._electric_field_matrix.set_z_values(new_value)
@@ -388,9 +392,10 @@ class GenericWavefront2D(Wavefront):
         return new_wf
 
     def clip_square(self, x_min, x_max, y_min, y_max, negative=False):
-        window = numpy.ones(self._electric_field_matrix.shape())
+
 
         if not negative:
+            window = numpy.ones(self._electric_field_matrix.shape())
             lower_window_x = numpy.where(self.get_coordinate_x() < x_min)
             upper_window_x = numpy.where(self.get_coordinate_x() > x_max)
             lower_window_y = numpy.where(self.get_coordinate_y() < y_min)
@@ -401,11 +406,17 @@ class GenericWavefront2D(Wavefront):
             if len(lower_window_y) > 0: window[:,lower_window_y] = 0
             if len(upper_window_y) > 0: window[:,upper_window_y] = 0
         else:
-            window_x = numpy.where(x_min <= self.get_coordinate_x() <= x_max)
-            window_y = numpy.where(y_min <= self.get_coordinate_y() <= y_max)
+            window = numpy.ones(self._electric_field_matrix.shape())
+            window2 = numpy.ones_like(window)
+            window_x = numpy.where( (x_min <= self.get_coordinate_x()) & ( self.get_coordinate_x() <= x_max))
+            window_y = numpy.where( (y_min <= self.get_coordinate_y()) & ( self.get_coordinate_y() <= y_max))
 
-            if len(window_x) > 0: window[window_x,:] = 0
-            if len(window_y) > 0: window[:,window_y] = 0
+            if len(window_x) > 0: window[window_x,:] = 0.0
+            if len(window_y) > 0: window2[:,window_y] = 0.0
+
+            window += window2
+            window_good = numpy.where( window > 0 )
+            if len(window_good) > 0: window[window_good] = 1.0
 
         self.rescale_amplitudes(window)
 

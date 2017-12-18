@@ -144,17 +144,21 @@ class GenericWavefront1D(Wavefront):
 
         self._electric_field_array.np_array = complex_amplitude
 
-    def set_plane_wave_from_complex_amplitude(self, complex_amplitude=(1.0 + 0.0j)):
+    def set_plane_wave_from_complex_amplitude(self, inclination=0.0, complex_amplitude=(1.0 + 0.0j)):
         self._electric_field_array.np_array = numpy.full(self._electric_field_array.size(), complex_amplitude, dtype=complex)
+        if inclination != 0.0:
+            self.add_phase_shifts( self.get_wavenumber() * self._electric_field_array.scale * numpy.tan(inclination) )
 
-    def set_plane_wave_from_amplitude_and_phase(self, amplitude=1.0, phase=0.0):
+    def set_plane_wave_from_amplitude_and_phase(self, amplitude=1.0, phase=0.0, inclination=0.0):
         self.set_plane_wave_from_complex_amplitude(amplitude*numpy.cos(phase) + 1.0j*amplitude*numpy.sin(phase))
+        if inclination != 0.0:
+            self.add_phase_shifts( self.get_wavenumber() * self._electric_field_array.scale * numpy.tan(inclination) )
 
-    def set_spherical_wave(self, radius=1.0, complex_amplitude=1.0):
+    def set_spherical_wave(self, radius=1.0, center=0.0, complex_amplitude=1.0):
         if radius == 0: raise Exception("Radius cannot be zero")
 
-        self._electric_field_array.np_array = (complex_amplitude / (-radius)) * numpy.exp(-1.0j * self.get_wavenumber() *
-                                                                                          (self._electric_field_array.scale ** 2) / (-2 * radius))
+        self._electric_field_array.np_array = complex_amplitude * numpy.exp(-1.0j * self.get_wavenumber() *
+                                            ( (self._electric_field_array.scale - center)** 2) / (-2 * radius))
 
 
     def set_gaussian_hermite_mode(self, sigma_x, mode_x, amplitude=1.0):
@@ -195,9 +199,10 @@ class GenericWavefront1D(Wavefront):
             if len(lower_window) > 0: window[lower_window] = 0
             if len(upper_window) > 0: window[upper_window] = 0
         else:
-            window = numpy.where(x_min <= self.get_abscissas() <= x_max)
+            window_indices = numpy.where((self.get_abscissas() >= x_min) & (self.get_abscissas() <= x_max))
 
-            if len(window) > 0: window[window] = 0
+            if len(window_indices) > 0:
+                window[window_indices] = 0.0
 
         self.rescale_amplitudes(window)
 
