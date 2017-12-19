@@ -24,6 +24,7 @@ class Fresnel1D(Propagator1D):
     :return: a new 1D wavefront object with propagated wavefront
     """
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
+
         fft_scale = numpy.fft.fftfreq(wavefront.size())/wavefront.delta()
 
         fft = numpy.fft.fft(wavefront.get_complex_amplitude())

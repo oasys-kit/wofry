@@ -20,9 +20,15 @@ class Integral1D(Propagator1D):
     # 1D Fresnel-Kirchhoff propagator via simplified integral
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
 
-        mX = parameters.get_additional_parameter("magnification_x")
+        try:
+            mX = parameters.get_additional_parameter("magnification_x")
+        except:
+            mX = 1.0
 
-        mN = parameters.get_additional_parameter("magnification_N")
+        try:
+            mN = parameters.get_additional_parameter("magnification_N")
+        except:
+            mN = 1.0
 
         method = 0
 

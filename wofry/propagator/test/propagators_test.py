@@ -132,14 +132,13 @@ class propagatorTest(unittest.TestCase):
 
 
         print("\n#                                                            ")
-        print("# far field 1D (fraunhofer) diffraction from a %s aperture  "%aperture_type)
+        print("# 1D (%s) propagation from a %s aperture  "%(method,aperture_type))
         print("#                                                            ")
 
         wf = GenericWavefront1D.initialize_wavefront_from_range(x_min=-wavefront_length/2, x_max=wavefront_length/2,
                                                                 number_of_points=npoints,wavelength=wavelength)
 
         wf.set_plane_wave_from_complex_amplitude((2.0+1.0j)) # an arbitraty value
-
 
         propagation_elements = PropagationElements()
 
@@ -160,7 +159,7 @@ class propagatorTest(unittest.TestCase):
         propagation_parameters = PropagationParameters(wavefront=wf,
                                                        propagation_elements=propagation_elements)
 
-
+        print("Using propagator method:  ",method)
         if method == 'fft':
             wf1 = propagator.do_propagation(propagation_parameters, Fresnel1D.HANDLER_NAME)
         elif method == 'convolution':
@@ -170,6 +169,7 @@ class propagatorTest(unittest.TestCase):
             propagation_parameters.set_additional_parameters("magnification_N", 2.0)
             wf1 = propagator.do_propagation(propagation_parameters, Integral1D.HANDLER_NAME)
         elif method == 'fraunhofer':
+            # propagation_parameters.set_additional_parameters("shift_half_pixel", 0)
             wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer1D.HANDLER_NAME)
         elif method == 'zoom':
             propagation_parameters.set_additional_parameters("magnification_x", 1.5)
@@ -234,9 +234,9 @@ class propagatorTest(unittest.TestCase):
         propagation_distance = 30.0
         npoints=1024
 
-        print("\n#                                                            ")
-        print("# far field 1D (fraunhofer) diffraction from a %s aperture  "%aperture_type)
-        print("#                                                            ")
+        # print("\n#                                                            ")
+        # print("# near field 1D (fft) diffraction from a %s aperture  "%aperture_type)
+        # print("#                                                            ")
 
 
 
@@ -304,7 +304,7 @@ class propagatorTest(unittest.TestCase):
         npoints=1024
 
         print("\n#                                                            ")
-        print("# far field 1D (fraunhofer) diffraction from a %s aperture  "%aperture_type)
+        print("# near field 1D (integral) diffraction from a %s aperture  "%aperture_type)
         print("#                                                            ")
 
 

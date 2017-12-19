@@ -313,8 +313,8 @@ class GenericWavefront2D(Wavefront):
     def set_spherical_wave(self,  radius=1.0, complex_amplitude=1.0,):
         """
 
-        :param complex_amplitude:
         :param radius:  Positive radius is divergent wavefront, negative radius is convergent
+        :param complex_amplitude:
         :return:
         """
         if radius == 0:
@@ -326,18 +326,18 @@ class GenericWavefront2D(Wavefront):
         #                         (self.get_mesh_x()**2+self.get_mesh_y()**2)/(-2*radius))
         self._electric_field_matrix.set_z_values(new_value)
 
-    def set_gaussian_hermite_mode(self, sigma_x, sigma_y, nx, ny, amplitude=1.0):
+    def set_gaussian_hermite_mode(self, sigma_x, sigma_y, nx, ny, amplitude=1.0, center_x=0.0, center_y=0.0):
         x = self.get_coordinate_x()
         y = self.get_coordinate_y()
 
         a2D = GaussianSchellModel2D(amplitude, sigma_x, 100.0*sigma_x, sigma_y, 100.0*sigma_y)
-        Phi = a2D.phi_nm(nx, ny, x, y)
+        Phi = a2D.phi_nm(nx, ny, x-center_x, y-center_y)
 
         self.set_complex_amplitude(Phi)
 
     # note that amplitude is for "amplitude" not for intensity!
-    def set_gaussian(self, sigma_x, sigma_y, amplitude=1.0):
-        self.set_gaussian_hermite_mode(sigma_x, sigma_y, 0, 0, amplitude=amplitude)
+    def set_gaussian(self, sigma_x, sigma_y, amplitude=1.0, center_x=0.0, center_y=0.0):
+        self.set_gaussian_hermite_mode(sigma_x, sigma_y, 0, 0, amplitude=amplitude, center_x=center_x, center_y=center_y)
 
 
     def add_phase_shift(self, phase_shift):

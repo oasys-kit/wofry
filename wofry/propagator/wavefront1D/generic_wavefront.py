@@ -144,7 +144,7 @@ class GenericWavefront1D(Wavefront):
 
         self._electric_field_array.np_array = complex_amplitude
 
-    def set_plane_wave_from_complex_amplitude(self, inclination=0.0, complex_amplitude=(1.0 + 0.0j)):
+    def set_plane_wave_from_complex_amplitude(self, complex_amplitude=(1.0 + 0.0j), inclination=0.0):
         self._electric_field_array.np_array = numpy.full(self._electric_field_array.size(), complex_amplitude, dtype=complex)
         if inclination != 0.0:
             self.add_phase_shifts( self.get_wavenumber() * self._electric_field_array.scale * numpy.tan(inclination) )
@@ -161,16 +161,16 @@ class GenericWavefront1D(Wavefront):
                                             ( (self._electric_field_array.scale - center)** 2) / (-2 * radius))
 
 
-    def set_gaussian_hermite_mode(self, sigma_x, mode_x, amplitude=1.0):
+    def set_gaussian_hermite_mode(self, sigma_x, mode_x, amplitude=1.0, shift=0.0):
         a1D = GaussianSchellModel1D(amplitude, sigma_x, 100.0*sigma_x)
 
-        real_amplitude = a1D.phi(mode_x, self.get_abscissas())
+        real_amplitude = a1D.phi(mode_x, self.get_abscissas() - shift)
 
         self.set_complex_amplitude(real_amplitude+0.0j)
 
     # note that amplitude is for "amplitude" not for intensity!
-    def set_gaussian(self, sigma_x, amplitude=1.0):
-        self.set_gaussian_hermite_mode(sigma_x, 0, amplitude=amplitude)
+    def set_gaussian(self, sigma_x, amplitude=1.0, shift=0.0):
+        self.set_gaussian_hermite_mode(sigma_x, 0, amplitude=amplitude, shift=shift)
 
     def add_phase_shift(self, phase_shift):
         self._electric_field_array.np_array *= numpy.exp(1.0j * phase_shift)

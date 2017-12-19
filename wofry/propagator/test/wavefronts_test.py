@@ -132,7 +132,7 @@ class GenericWavefront1DTest(unittest.TestCase):
 
         # an spherical wavefront is obtained 1) by creation, 2) focusing a planewave
 
-        wf1.set_spherical_wave(-5.0, 3+0j)
+        wf1.set_spherical_wave(radius=-5.0, complex_amplitude=3+0j)
         wf1.clip(-50e-6,10e-6)
 
         wf2.set_plane_wave_from_complex_amplitude(3+0j)

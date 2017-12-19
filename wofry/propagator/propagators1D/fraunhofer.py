@@ -27,6 +27,7 @@ class Fraunhofer1D(Propagator1D):
 
     # TODO: check resulting amplitude normalization
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
+
         fft = numpy.fft.fft(wavefront.get_complex_amplitude())
         fft2 = numpy.fft.fftshift(fft)
 
@@ -37,8 +38,11 @@ class Fraunhofer1D(Propagator1D):
         freq_x = freq_n * freq_nyquist
         freq_x *= wavefront.get_wavelength()
 
-        if parameters.get_additional_parameter("shift_half_pixel"):
-            freq_x = freq_x - 0.5 * numpy.abs(freq_x[1] - freq_x[0])
+        try:
+            if parameters.get_additional_parameter("shift_half_pixel"):
+                freq_x = freq_x - 0.5 * numpy.abs(freq_x[1] - freq_x[0])
+        except:
+            pass
 
         #if propagation_distance == 0:
         #    wf = GenericWavefront1D.initialize_wavefront_from_arrays(freq_x,fft2,wavelength=wavefront.get_wavelength())
