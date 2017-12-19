@@ -166,7 +166,7 @@ class GenericWavefront1D(Wavefront):
 
         real_amplitude = a1D.phi(mode_x, self.get_abscissas())
 
-        self.set_complex_amplitude(real_amplitude)
+        self.set_complex_amplitude(real_amplitude+0.0j)
 
     # note that amplitude is for "amplitude" not for intensity!
     def set_gaussian(self, sigma_x, amplitude=1.0):
