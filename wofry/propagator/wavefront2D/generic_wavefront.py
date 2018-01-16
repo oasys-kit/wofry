@@ -81,18 +81,19 @@ class GenericWavefront2D(Wavefront):
 
 
     def get_Wavefront1D_from_profile(self, axis, coordinate):
-        if axis == 0: # fixed X
+        # swap axis - changed giovanni+manuel
+        if axis == 1: # fixed X
             index = numpy.argmin(numpy.abs(self._electric_field_matrix.x_coord - coordinate))
 
             return GenericWavefront1D(wavelength=self._wavelength,
                                       electric_field_array=ScaledArray(scale=self._electric_field_matrix.y_coord,
-                                                                       np_array=self._electric_field_matrix.z_values[index][:]))
-        elif axis == 1:
+                                                                       np_array=self._electric_field_matrix.z_values[index, :]))
+        elif axis == 0:
             index = numpy.argmin(numpy.abs(self._electric_field_matrix.y_coord - coordinate))
 
             return GenericWavefront1D(wavelength=self._wavelength,
                                       electric_field_array=ScaledArray(scale=self._electric_field_matrix.x_coord,
-                                                                       np_array=self._electric_field_matrix.z_values[:][index]))
+                                                                       np_array=self._electric_field_matrix.z_values[:, index]))
 
     #TODO
     def get_Wavefront1D_from_histogram(self, axis):
@@ -117,16 +118,18 @@ class GenericWavefront2D(Wavefront):
                                                                           y_step=wavefront_v.delta(),
                                                                           number_of_points=(wavefront_h.size(), wavefront_v.size()))
 
-        complex_amplitude =  numpy.zeros((wavefront_h.size(), wavefront_v.size()), dtype=complex)
+        # complex_amplitude =  numpy.zeros((wavefront_h.size(), wavefront_v.size()), dtype=complex)
+        #
+        # for i in range (0, wavefront_h.size()):
+        #     for j in range (0, wavefront_v.size()):
+        #         complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j],
+        #                                           wavefront_h.get_phase()[i] + wavefront_v.get_phase()[j])
 
-        for i in range (0, wavefront_h.size()):
-            for j in range (0, wavefront_v.size()):
-                complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j],
-                                                  wavefront_h.get_phase()[i] + wavefront_v.get_phase()[j])
+        complex_amplitude = numpy.outer(wavefront_h.get_complex_amplitude(), wavefront_v.get_complex_amplitude())
 
         normalization_factor /= numpy.sum(numpy.abs(complex_amplitude))
 
-        wavefront_2D.set_complex_amplitude(complex_amplitude*normalization_factor)
+        wavefront_2D.set_complex_amplitude(complex_amplitude * normalization_factor)
 
         return wavefront_2D
 
@@ -165,7 +168,19 @@ class GenericWavefront2D(Wavefront):
     def get_amplitude(self):
         return numpy.absolute(self.get_complex_amplitude())
 
-    def get_phase(self,from_minimum_intensity=0.0):
+    def get_phase(self,from_minimum_intensity=0.0,unwrap=0):
+        """
+
+        :param from_minimum_intensity: set to zero phase values at pixels where intensity
+                                        is less than from_minimum_intensity threshold
+        :param unwrap: Flag to unwrap the returned phase:
+            0: No unwrap (default)
+            1: Unwrap only in Horizontal axis.
+            2: Unwrap only in Vertical axis.
+            3: Unwrap first in H, then in V.
+            4: Unwrap first in V, then in H.
+        :return: the phase in a numpy array
+        """
         # return numpy.arctan2(numpy.imag(self.get_complex_amplitude()), numpy.real(self.get_complex_amplitude()))
         phase = numpy.angle( self.get_complex_amplitude() )
 
@@ -174,6 +189,18 @@ class GenericWavefront2D(Wavefront):
             intensity /= intensity.max()
             bad_indices = numpy.where(intensity < from_minimum_intensity )
             phase[bad_indices] = 0.0
+
+        if unwrap > 0:
+            if unwrap == 1: # x only
+                phase = numpy.unwrap(phase,axis=0)
+            elif unwrap == 2: # y only
+                phase = numpy.unwrap(phase,axis=1)
+            elif unwrap == 3: # x and y
+                phase = numpy.unwrap(numpy.unwrap(phase,axis=0),axis=1)
+            elif unwrap == 4: # y and x
+                phase = numpy.unwrap(numpy.unwrap(phase,axis=1),axis=0)
+            else:
+                raise Exception(NotImplemented)
 
         return phase
 
@@ -271,42 +298,46 @@ class GenericWavefront2D(Wavefront):
             raise Exception("Incompatible shape")
         self._electric_field_matrix.set_z_values(complex_amplitude)
 
+    # TODO: add inclination like for 1D
     def set_plane_wave_from_complex_amplitude(self, complex_amplitude=(1.0 + 0.0j)):
         new_value = self._electric_field_matrix.get_z_values()
         new_value *= 0.0
         new_value += complex_amplitude
         self._electric_field_matrix.set_z_values(new_value)
 
+    # TODO: add inclination like for 1D
     def set_plane_wave_from_amplitude_and_phase(self, amplitude=1.0, phase=0.0):
         self.set_plane_wave_from_complex_amplitude(amplitude*numpy.cos(phase) + 1.0j*amplitude*numpy.sin(phase))
 
+    # TODO: add center like for 1D
     def set_spherical_wave(self,  radius=1.0, complex_amplitude=1.0,):
         """
 
-        :param complex_amplitude:
         :param radius:  Positive radius is divergent wavefront, negative radius is convergent
+        :param complex_amplitude:
         :return:
         """
         if radius == 0:
             raise Exception("Radius cannot be zero")
-        new_value = (complex_amplitude/(-radius))*numpy.exp(-1.0j * self.get_wavenumber() *
-                                (self.get_mesh_x()**2+self.get_mesh_y()**2)/(-2*radius))
+        new_value = complex_amplitude * numpy.exp( -1.0j * self.get_wavenumber() *
+                                (self.get_mesh_x()**2 + self.get_mesh_y()**2) / (-2*radius) )
+
         # new_value = numpy.exp(-1.0j * self.get_wavenumber() *
         #                         (self.get_mesh_x()**2+self.get_mesh_y()**2)/(-2*radius))
         self._electric_field_matrix.set_z_values(new_value)
 
-    def set_gaussian_hermite_mode(self, sigma_x, sigma_y, nx, ny, amplitude=1.0):
+    def set_gaussian_hermite_mode(self, sigma_x, sigma_y, nx, ny, amplitude=1.0, center_x=0.0, center_y=0.0):
         x = self.get_coordinate_x()
         y = self.get_coordinate_y()
 
         a2D = GaussianSchellModel2D(amplitude, sigma_x, 100.0*sigma_x, sigma_y, 100.0*sigma_y)
-        Phi = a2D.phi_nm(nx, ny, x, y)
+        Phi = a2D.phi_nm(nx, ny, x-center_x, y-center_y)
 
         self.set_complex_amplitude(Phi)
 
     # note that amplitude is for "amplitude" not for intensity!
-    def set_gaussian(self, sigma_x, sigma_y, amplitude=1.0):
-        self.set_gaussian_hermite_mode(sigma_x, sigma_y, 0, 0, amplitude=amplitude)
+    def set_gaussian(self, sigma_x, sigma_y, amplitude=1.0, center_x=0.0, center_y=0.0):
+        self.set_gaussian_hermite_mode(sigma_x, sigma_y, 0, 0, amplitude=amplitude, center_x=center_x, center_y=center_y)
 
 
     def add_phase_shift(self, phase_shift):
@@ -361,9 +392,10 @@ class GenericWavefront2D(Wavefront):
         return new_wf
 
     def clip_square(self, x_min, x_max, y_min, y_max, negative=False):
-        window = numpy.ones(self._electric_field_matrix.shape())
+
 
         if not negative:
+            window = numpy.ones(self._electric_field_matrix.shape())
             lower_window_x = numpy.where(self.get_coordinate_x() < x_min)
             upper_window_x = numpy.where(self.get_coordinate_x() > x_max)
             lower_window_y = numpy.where(self.get_coordinate_y() < y_min)
@@ -374,11 +406,17 @@ class GenericWavefront2D(Wavefront):
             if len(lower_window_y) > 0: window[:,lower_window_y] = 0
             if len(upper_window_y) > 0: window[:,upper_window_y] = 0
         else:
-            window_x = numpy.where(x_min <= self.get_coordinate_x() <= x_max)
-            window_y = numpy.where(y_min <= self.get_coordinate_y() <= y_max)
+            window = numpy.ones(self._electric_field_matrix.shape())
+            window2 = numpy.ones_like(window)
+            window_x = numpy.where( (x_min <= self.get_coordinate_x()) & ( self.get_coordinate_x() <= x_max))
+            window_y = numpy.where( (y_min <= self.get_coordinate_y()) & ( self.get_coordinate_y() <= y_max))
 
-            if len(window_x) > 0: window[window_x,:] = 0
-            if len(window_y) > 0: window[:,window_y] = 0
+            if len(window_x) > 0: window[window_x,:] = 0.0
+            if len(window_y) > 0: window2[:,window_y] = 0.0
+
+            window += window2
+            window_good = numpy.where( window > 0 )
+            if len(window_good) > 0: window[window_good] = 1.0
 
         self.rescale_amplitudes(window)
 
@@ -396,6 +434,59 @@ class GenericWavefront2D(Wavefront):
 
         self.rescale_amplitudes(window)
 
+    def is_identical(self,wfr,decimal=7):
+        from numpy.testing import assert_array_almost_equal
+        try:
+            assert_array_almost_equal(self.get_complex_amplitude(),wfr.get_complex_amplitude(),decimal)
+            assert_array_almost_equal(self.get_coordinate_x(),wfr.get_coordinate_x(),decimal)
+            assert_array_almost_equal(self.get_coordinate_y(),wfr.get_coordinate_y(),decimal)
+            assert_array_almost_equal(self.get_photon_energy(),wfr.get_photon_energy(),decimal)
+        except:
+            return False
+
+        return True
 
 
+    def save_h5_file(self,filename,prefix="",intensity=True,phase=True,complex_amplitude=True):
+
+        try:
+            import h5py
+
+            f = h5py.File(filename, 'w')
+
+            f[prefix+"_dimension"] = 2
+            f[prefix+"_photon_energy"] = self.get_photon_energy()
+            f[prefix+"_x"] = self.get_coordinate_x()
+            f[prefix+"_y"] = self.get_coordinate_y()
+
+            if intensity:
+                f[prefix+"_intensity"] = self.get_intensity()
+
+            if phase:
+                f[prefix+"_phase"] = self.get_phase()
+
+            if complex_amplitude:
+                ca = self.get_complex_amplitude()
+                f[prefix+"_complexamplitude_sigma"] = ca
+                f[prefix+"_complexamplitude_pi"] = numpy.zeros_like(ca)
+
+            print("File written to disk: "+filename)
+            f.close()
+        except:
+            raise Exception("Failed to save 2D wavefront to h5 file: "+filename)
+
+    @classmethod
+    def load_h5_file(cls,filename,prefix=""):
+
+        try:
+            import h5py
+
+            f = h5py.File(filename, 'r')
+            wfr = cls.initialize_wavefront_from_arrays(x_array=f[prefix+"_x"].value, y_array=f[prefix+"_y"].value,
+                                                  z_array=f[prefix+"_complexamplitude_sigma"].value)
+            wfr.set_photon_energy(f[prefix+"_photon_energy"].value)
+            f.close()
+            return wfr
+        except:
+            raise Exception("Failed to load 2D wavefront to h5 file: "+filename)
 
