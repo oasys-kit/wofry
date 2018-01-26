@@ -2,7 +2,7 @@
 import numpy
 
 from syned.beamline.optical_elements.absorbers.slit import Slit
-from syned.beamline.shape import BoundaryShape, Rectangle, Ellipse
+from syned.beamline.shape import BoundaryShape, Rectangle, Circle, Ellipse
 
 from wofry.beamline.decorators import OpticalElementDecorator
 
@@ -15,6 +15,8 @@ class WOSlit(Slit, OpticalElementDecorator):
 
         if isinstance(self._boundary_shape, Rectangle):
             wavefront.clip_square(boundaries[0], boundaries[1], boundaries[2], boundaries[3])
+        elif isinstance(self._boundary_shape, Circle):
+            wavefront.clip_circle(boundaries[0], boundaries[1], boundaries[2])
         else:
             raise NotImplementedError("to be implemented")
 

@@ -1,6 +1,6 @@
 
 from syned.beamline.optical_elements.absorbers.beam_stopper import BeamStopper
-from syned.beamline.shape import BoundaryShape, Rectangle, Ellipse
+from syned.beamline.shape import BoundaryShape, Rectangle, Circle, Ellipse
 
 from wofry.beamline.decorators import OpticalElementDecorator
 
@@ -13,6 +13,8 @@ class WOBeamStopper(BeamStopper, OpticalElementDecorator):
 
         if isinstance(self._boundary_shape, Rectangle):
             wavefront.clip_square(boundaries[0], boundaries[1], boundaries[2], boundaries[3], negative=True)
+        elif isinstance(self._boundary_shape, Circle):
+            wavefront.clip_circle(boundaries[0], boundaries[1], boundaries[2], negative=True)
         else:
             raise NotImplementedError("to be implemented")
 
@@ -31,3 +33,6 @@ class WOBeamStopper1D(BeamStopper, OpticalElementDecorator):
             raise NotImplementedError("to be implemented")
 
         return wavefront
+
+
+
