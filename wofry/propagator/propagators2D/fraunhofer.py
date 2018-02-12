@@ -31,7 +31,8 @@ class Fraunhofer2D(Propagator2D):
     def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
         return self.do_specific_progation(wavefront, propagation_distance, parameters)
 
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
+
+    def do_specific_progation(self, wavefront, propagation_distance, parameters): #todo: modificato da giovanni
         if not parameters.has_additional_parameter("shift_half_pixel"):
             raise ValueError("Missing Parameter shift_half_pixel")
 
@@ -60,34 +61,43 @@ class Fraunhofer2D(Propagator2D):
         # frequency for axis 1
         shape = wavefront.size()
         delta = wavefront.delta()
+        wavenumber = wavefront.get_wavenumber()
 
-        pixelsize = delta[0] # p_x[1] - p_x[0]
+        pixelsize = delta[0]  # p_x[1] - p_x[0]
         npixels = shape[0]
-        freq_nyquist = 0.5/pixelsize
-        freq_n = numpy.linspace(-1.0, 1.0, npixels)
-        freq_x = freq_n * freq_nyquist
-        freq_x *= wavelength
+        fft_scale = numpy.fft.fftfreq(npixels, d=pixelsize)
+        fft_scale = numpy.fft.fftshift(fft_scale)
+        x2 = fft_scale * propagation_distance * wavelength
 
         # frequency for axis 2
         pixelsize = delta[1]
         npixels = shape[1]
-        freq_nyquist = 0.5/pixelsize
-        freq_n = numpy.linspace(-1.0, 1.0, npixels)
-        freq_y = freq_n * freq_nyquist
-        freq_y *= wavelength
+        fft_scale = numpy.fft.fftfreq(npixels, d=pixelsize)
+        fft_scale = numpy.fft.fftshift(fft_scale)
+        y2 = fft_scale * propagation_distance * wavelength
 
+        f_x, f_y = numpy.meshgrid(x2, y2, indexing='ij')
+        fsq = numpy.fft.fftshift(f_x ** 2 + f_y ** 2)
+
+        P1 = numpy.exp(1.0j * wavenumber * propagation_distance)
+        P2 = numpy.exp(1.0j * wavenumber / 2 / propagation_distance * fsq)
+        P3 = 1.0j * wavelength * propagation_distance
+
+        F1 = numpy.fft.fft2(wavefront.get_complex_amplitude())  # Take the fourier transform of the image.
+        #  Now shift the quadrants around so that low spatial frequencies are in
+        # the center of the 2D fourier transformed image.
+        F1 *= P1
+        F1 *= P2
+        F1 /= P3
+        F2 = numpy.fft.fftshift(F1)
 
         if shift_half_pixel:
-            freq_x = freq_x - 0.5 * numpy.abs(freq_x[1] - freq_x[0])
-            freq_y = freq_y - 0.5 * numpy.abs(freq_y[1] - freq_y[0])
+            x2 = x2 - 0.5 * numpy.abs(x2[1] - x2[0])
+            y2 = y2 - 0.5 * numpy.abs(y2[1] - y2[0])
 
-        if propagation_distance != 1.0:
-            freq_x *= propagation_distance
-            freq_y *= propagation_distance
-
-        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=freq_x,
-                                                                            y_array=freq_y,
+        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=x2,
+                                                                            y_array=y2,
                                                                             z_array=F2,
                                                                             wavelength=wavelength)
 
-        return  wf_propagated
+        return wf_propagated

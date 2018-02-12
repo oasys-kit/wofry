@@ -28,27 +28,27 @@ class Fraunhofer1D(Propagator1D):
     # TODO: check resulting amplitude normalization
     def do_specific_progation(self, wavefront, propagation_distance, parameters):
 
-        fft = numpy.fft.fft(wavefront.get_complex_amplitude())
-        fft2 = numpy.fft.fftshift(fft)
-
-        # frequency for axis 1
-
-        freq_nyquist = 0.5/wavefront.delta()
-        freq_n = numpy.linspace(-1.0,1.0,wavefront.size())
-        freq_x = freq_n * freq_nyquist
-        freq_x *= wavefront.get_wavelength()
+        shape = wavefront.size()
+        delta = wavefront.delta()
+        wavelength = wavefront.get_wavelength()
+        wavenumber = wavefront.get_wavenumber()
+        fft_scale = numpy.fft.fftfreq(shape, d=delta)
+        fft_scale = numpy.fft.fftshift(fft_scale)
+        x2 = fft_scale * propagation_distance * wavelength
 
         try:
             if parameters.get_additional_parameter("shift_half_pixel"):
-                freq_x = freq_x - 0.5 * numpy.abs(freq_x[1] - freq_x[0])
+                x2 = x2 - 0.5 * numpy.abs(x2[1] - x2[0])
         except:
             pass
 
-        #if propagation_distance == 0:
-        #    wf = GenericWavefront1D.initialize_wavefront_from_arrays(freq_x,fft2,wavelength=wavefront.get_wavelength())
-        #    return wf
-        #else:
-        #    wf = GenericWavefront1D.initialize_wavefront_from_arrays(freq_x*propagation_distance,fft2,wavelength=wavefront.get_wavelength())
-        #    return wf
 
-        return GenericWavefront1D.initialize_wavefront_from_arrays(freq_x*propagation_distance,fft2,wavelength=wavefront.get_wavelength())
+        p1 = numpy.exp(1.0j * wavenumber * propagation_distance)
+        p2 = numpy.exp(1.0j * wavenumber / 2 / propagation_distance * x2**2)
+        p3 = 1.0j*wavelength*propagation_distance
+
+        fft = numpy.fft.fft(wavefront.get_complex_amplitude())
+        fft = fft * p1 * p2 / p3
+        fft2 = numpy.fft.fftshift(fft)
+
+        return GenericWavefront1D.initialize_wavefront_from_arrays(x2, fft2, wavelength=wavefront.get_wavelength())

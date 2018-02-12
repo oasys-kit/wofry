@@ -1,17 +1,10 @@
 import unittest
 import numpy
 
-# TODO: REMOVE THIS!!!!
-# try:
-#     from srwlib import *
-#     SRWLIB_AVAILABLE = True
-# except:
-#     try:
-#         from wpg.srwlib import *
-#         SRWLIB_AVAILABLE = True
-#     except:
-#         SRWLIB_AVAILABLE = False
-#         print("SRW is not available")
+
+#
+# Note that the tests for the Fraunhofer phase do not make any assert, because a good matching has not yet been found.
+#
 
 SRWLIB_AVAILABLE = False
 
@@ -197,6 +190,7 @@ class propagatorTest(unittest.TestCase):
                  xtitle="X (urad)", ytitle="Intensity",xrange=[-20,20],
                  show=show)
 
+
         return wf1.get_abscissas()/propagation_distance,intensity_calculated,intensity_theory
 
 
@@ -224,6 +218,83 @@ class propagatorTest(unittest.TestCase):
                                 propagation_distance = 1.0, show=1)
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
+
+    def test_propagate_1D_fraunhofer_phase(self,do_plot=do_plot):
+
+        # aperture_type="square"
+        # aperture_diameter = 40e-6
+        # wavefront_length = 800e-6
+        # wavelength = 1.24e-10
+        # npoints=1024
+        # propagation_distance=40
+        show = 1
+
+        aperture_type="square"
+        aperture_diameter = 40e-6
+        wavefront_length = 800e-6
+        wavelength = 1.24e-10
+        propagation_distance = 30.0
+        npoints=1024
+
+
+        print("\n#                                                            ")
+        print("# far field 1D (fraunhofer and zoom) diffraction from a %s aperture  "%aperture_type)
+        print("#                                                            ")
+
+        wf = GenericWavefront1D.initialize_wavefront_from_range(x_min=-wavefront_length/2, x_max=wavefront_length/2,
+                                                                number_of_points=npoints,wavelength=wavelength)
+
+        wf.set_plane_wave_from_complex_amplitude((2.0+1.0j)) # an arbitraty value
+
+        propagation_elements = PropagationElements()
+
+        if aperture_type == 'square':
+            slit = WOSlit1D(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, 0, 0))
+        else:
+            raise Exception("Not implemented! ")
+
+        propagation_elements.add_beamline_element(BeamlineElement(optical_element=slit,
+                                                                  coordinates=ElementCoordinates(p=0, q=propagation_distance)  ))
+
+
+        propagator = PropagationManager.Instance()
+        propagation_parameters = PropagationParameters(wavefront=wf,
+                                                       propagation_elements=propagation_elements)
+
+
+
+        wf1_franuhofer = propagator.do_propagation(propagation_parameters, Fraunhofer1D.HANDLER_NAME)
+
+        propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+        propagation_parameters.set_additional_parameters("magnification_x", 1.5)
+        wf1_zoom = propagator.do_propagation(propagation_parameters, FresnelZoom1D.HANDLER_NAME)
+
+
+        intensity_fraunhofer = wf1_franuhofer.get_intensity() / wf1_franuhofer.get_intensity().max()
+        intensity_zoom = wf1_zoom.get_intensity() / wf1_zoom.get_intensity().max()
+
+        if do_plot:
+            from srxraylib.plot.gol import plot
+            plot(wf1_franuhofer.get_abscissas()*1e6/propagation_distance,intensity_fraunhofer,
+                 wf1_zoom.get_abscissas()*1e6/propagation_distance,intensity_zoom,
+                 legend=["Fraunhofer","Zoom"],
+                 legend_position=(0.95, 0.95),
+                 title="1D  INTENSITY diffraction from aperture of %3.1f um at wavelength of %3.1f A"%
+                       (aperture_diameter*1e6,wavelength*1e10),
+                 xtitle="X (urad)", ytitle="Intensity",xrange=[-20,20],
+                 show=show)
+            plot(wf1_franuhofer.get_abscissas()*1e6/propagation_distance,wf1_franuhofer.get_phase(unwrap=1),
+                 wf1_zoom.get_abscissas()*1e6/propagation_distance,wf1_zoom.get_phase(unwrap=1),
+                 legend=["Fraunhofer","Zoom"],
+                 legend_position=(0.95, 0.95),
+                 title="1D  diffraction from a %s aperture of %3.1f um at wavelength of %3.1f A"%
+                       (aperture_type,aperture_diameter*1e6,wavelength*1e10),
+                 xtitle="X (urad)", ytitle="Intensity",xrange=[-20,20],
+                 show=show)
+
+        # TODO assert phase
+        #numpy.testing.assert_almost_equal(1e3*intensity_fraunhofer,1e3*intensity_zoom,1)
+
 
     def test_propagate_1D_fft(self,do_plot=do_plot):
 
@@ -553,12 +624,6 @@ class propagator2DTest(unittest.TestCase):
 
         print("Fraunhoffer diffraction valid for distances > > a^2/lambda = %f m"%((aperture_diameter/2)**2/wavelength))
 
-        # wf = Wavefront2D.initialize_wavefront_from_steps(x_start=-pixelsize_x*npixels_x/2,
-        #                                                         x_step=pixelsize_x,
-        #                                                         y_start=-pixelsize_y*npixels_y/2,
-        #                                                         y_step=pixelsize_y,
-        #                                                         wavelength=wavelength,
-        #                                                         number_of_points=(npixels_x,npixels_y))
         wf = GenericWavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
                                                          y_min=-pixelsize_y*npixels_y/2,y_max=pixelsize_y*npixels_y/2,
                                                          number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
@@ -630,6 +695,120 @@ class propagator2DTest(unittest.TestCase):
                  xtitle="X (urad)", ytitle="Intensity",xrange=[-80,80])
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
+
+
+    def test_propagate_2D_fraunhofer_phase(self,do_plot=do_plot,aperture_type='square',
+                                aperture_diameter=40e-6,
+                                pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
+                                propagation_distance=30.0,wavelength=1.24e-10):
+
+
+        print("\n#                                                            ")
+        print("# far field 2D (fraunhofer) diffraction from a square aperture  ")
+        print("#                                                            ")
+
+        method = "fraunhofer"
+
+        print("Fraunhoffer diffraction valid for distances > > a^2/lambda = %f m"%((aperture_diameter/2)**2/wavelength))
+
+        wf = GenericWavefront2D.initialize_wavefront_from_range(x_min=-pixelsize_x*npixels_x/2,x_max=pixelsize_x*npixels_x/2,
+                                                         y_min=-pixelsize_y*npixels_y/2,y_max=pixelsize_y*npixels_y/2,
+                                                         number_of_points=(npixels_x,npixels_y),wavelength=wavelength)
+
+        wf.set_plane_wave_from_complex_amplitude((1.0+0j))
+
+
+        propagation_elements = PropagationElements()
+
+        slit = None
+
+        if aperture_type == 'square':
+            slit = WOSlit(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, -aperture_diameter/2, aperture_diameter/2))
+        elif aperture_type == 'gaussian':
+            slit = WOGaussianSlit(boundary_shape=Rectangle(-aperture_diameter/2, aperture_diameter/2, -aperture_diameter/2, aperture_diameter/2))
+        else:
+            raise Exception("Not implemented! (accepted: circle, square, gaussian)")
+
+        propagation_elements.add_beamline_element(BeamlineElement(optical_element=slit,
+                                                                  coordinates=ElementCoordinates(p=0, q=propagation_distance)))
+
+
+        propagator = PropagationManager.Instance()
+        propagation_parameters = PropagationParameters(wavefront=wf,
+                                                       propagation_elements=propagation_elements)
+
+
+        propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+        wf1_fraunhofer = propagator.do_propagation(propagation_parameters, Fraunhofer2D.HANDLER_NAME)
+
+        propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+        propagation_parameters.set_additional_parameters("magnification_x", 1.5)
+        propagation_parameters.set_additional_parameters("magnification_y", 2.5)
+        wf1_zoom = propagator.do_propagation(propagation_parameters, FresnelZoomXY2D.HANDLER_NAME)
+
+
+        if aperture_type == 'circle':
+            wf.clip_circle(aperture_diameter/2)
+        elif aperture_type == 'square':
+            wf.clip_square(-aperture_diameter/2, aperture_diameter/2,-aperture_diameter/2, aperture_diameter/2)
+        elif aperture_type == 'gaussian':
+            X = wf.get_mesh_x()
+            Y = wf.get_mesh_y()
+            window = numpy.exp(- (X*X + Y*Y)/2/(aperture_diameter/2.35)**2)
+            wf.rescale_amplitudes(window)
+        else:
+            raise Exception("Not implemented! (accepted: circle, square, gaussian)")
+
+        if do_plot:
+            plot_image(wf.get_intensity(),1e6*wf.get_coordinate_x(),1e6*wf.get_coordinate_y(),
+                       title="aperture intensity (%s), Diameter=%5.1f um"%
+                             (aperture_type,1e6*aperture_diameter),xtitle="X [um]",ytitle="Y [um]",
+                       show=0)
+
+            plot_image(wf1_fraunhofer.get_intensity(),1e6*wf1_fraunhofer.get_coordinate_x(),1e6*wf1_fraunhofer.get_coordinate_y(),
+                       title="2D Diffracted intensity (%s) by a %s slit of aperture %3.1f um"%
+                             (aperture_type,"Fraunhofer",1e6*aperture_diameter),
+                       xtitle="X [urad]",ytitle="Y [urad]",
+                       show=0)
+
+            plot_image(wf1_zoom.get_intensity(),1e6*wf1_zoom.get_coordinate_x(),1e6*wf1_zoom.get_coordinate_y(),
+                       title="2D Diffracted intensity (%s) by a %s slit of aperture %3.1f um"%
+                             (aperture_type,"Zoom",1e6*aperture_diameter),
+                       xtitle="X [urad]",ytitle="Y [urad]",
+                       show=0)
+
+        intensity_calculated_fraunhofer =  wf1_fraunhofer.get_intensity()[:,int(wf1_fraunhofer.size()[1]/2)]
+        intensity_calculated_fraunhofer /= intensity_calculated_fraunhofer.max()
+
+        intensity_calculated_zoom =  wf1_zoom.get_intensity()[:,int(wf1_fraunhofer.size()[1]/2)]
+        intensity_calculated_zoom /= intensity_calculated_zoom.max()
+
+        phase_calculated_fraunhofer =  wf1_fraunhofer.get_phase()[:,int(wf1_fraunhofer.size()[1]/2)]
+        phase_calculated_fraunhofer = numpy.unwrap(phase_calculated_fraunhofer)
+
+        phase_calculated_zoom =  wf1_zoom.get_phase()[:,int(wf1_zoom.size()[1]/2)]
+        phase_calculated_zoom = numpy.unwrap(phase_calculated_zoom)
+
+        if do_plot:
+            plot(wf1_fraunhofer.get_coordinate_x()*1e6/propagation_distance, intensity_calculated_fraunhofer,
+                 wf1_zoom.get_coordinate_x()*1e6      /propagation_distance, intensity_calculated_zoom,
+                 legend=["Fraunhofer H profile","Zoom H profile"],legend_position=(0.95, 0.95),
+                 title="2D Diffraction of a %s slit of %3.1f um at wavelength of %3.1f A"%
+                       (aperture_type,aperture_diameter*1e6,wavelength*1e10),
+                 xtitle="X (urad)", ytitle="Intensity",xrange=[-80,80],show=0)
+
+            plot(wf1_fraunhofer.get_coordinate_x()*1e6/propagation_distance, phase_calculated_fraunhofer,
+                 wf1_zoom.get_coordinate_x()*1e6      /propagation_distance, phase_calculated_zoom,
+                 legend=["Fraunhofer H profile","Zoom H profile"],legend_position=(0.95, 0.95),
+                 title="2D Diffraction of a %s slit of %3.1f um at wavelength of %3.1f A"%
+                       (aperture_type,aperture_diameter*1e6,wavelength*1e10),
+                 xtitle="X (urad)", ytitle="Phase",xrange=[-80,80])
+
+
+        numpy.testing.assert_almost_equal(1e-3*intensity_calculated_fraunhofer,1e-3*intensity_calculated_zoom,1)
+        # TODO: assert for phase
+
+
 
     def test_propagate_2D_fresnel_srw_square(self):
 
