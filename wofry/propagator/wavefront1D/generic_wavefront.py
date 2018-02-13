@@ -7,6 +7,14 @@ from wofry.propagator.wavefront import Wavefront, WavefrontDimension
 
 from wofry.propagator.util.gaussian_schell_model import GaussianSchellModel1D
 
+# needed for h5 i/o
+import os
+import sys
+import time
+try:
+    import h5py
+except:
+    raise ImportError("h5py not available: input/output to files not working")
 # --------------------------------------------------
 # Wavefront 1D
 # --------------------------------------------------
@@ -217,49 +225,184 @@ class GenericWavefront1D(Wavefront):
 
         return True
 
+    #
+    # def save_h5_file(self,filename,prefix="",intensity=True,phase=True,complex_amplitude=True):
+    #
+    #     try:
+    #         import h5py
+    #
+    #         f = h5py.File(filename, 'w')
+    #
+    #         f[prefix+"_dimension"] = 1
+    #         f[prefix+"_photon_energy"] = self.get_photon_energy()
+    #         f[prefix+"_x"] = self.get_abscissas()
+    #
+    #         if intensity:
+    #             f[prefix+"_intensity"] = self.get_intensity()
+    #
+    #         if phase:
+    #             f[prefix+"_phase"] = self.get_phase()
+    #
+    #         if complex_amplitude:
+    #             ca = self.get_complex_amplitude()
+    #             f[prefix+"_complexamplitude_sigma"] = ca
+    #             f[prefix+"_complexamplitude_pi"] = numpy.zeros_like(ca)
+    #
+    #         print("File written to disk: "+filename)
+    #         f.close()
+    #     except:
+    #         raise Exception("Failed to save 1D wavefront to h5 file: "+filename)
+    #
+    # @classmethod
+    # def load_h5_file(cls,filename,prefix=""):
+    #
+    #     try:
+    #         import h5py
+    #
+    #         f = h5py.File(filename, 'r')
+    #         wfr = cls.initialize_wavefront_from_arrays(x_array=f[prefix+"_x"].value,
+    #                     y_array=f[prefix+"_complexamplitude_sigma"].value)
+    #         wfr.set_photon_energy(f[prefix+"_photon_energy"].value)
+    #         f.close()
+    #         return wfr
+    #     except:
+    #         raise Exception("Failed to load 1D wavefront to h5 file: "+filename)
+    #
 
-    def save_h5_file(self,filename,prefix="",intensity=True,phase=True,complex_amplitude=True):
 
+    # auxiliary function to dump h5 files
+    def _dump_arr_2_hdf5(self,_arr,_calculation, _filename, _subgroupname):
+        """
+        Auxiliary routine to save_h5_file
+        :param _arr: (usually 2D) array to be saved on the hdf5 file inside the _subgroupname
+        :param _calculation
+        :param _filename: path to file for saving the wavefront
+        :param _subgroupname: container mechanism by which HDF5 files are organised
+        """
+        sys.stdout.flush()
+        f = h5py.File(_filename, 'a')
         try:
-            import h5py
+            f1 = f.create_group(_subgroupname)
+        except:
+            f1 = f[_subgroupname]
+        fdata = f1.create_dataset(_calculation, data=_arr)
+        f.close()
 
-            f = h5py.File(filename, 'w')
+    def save_h5_file(self,filename,subgroupname="wfr",intensity=False,phase=False,overwrite=True,verbose=False):
+        """
+        Auxiliary function to write wavefront data into a hdf5 generic file.
+        When using the append mode to write h5 files, overwriting does not work and makes the code crash. To avoid this
+        issue, try/except is used. If by any chance a file should be overwritten, it is firstly deleted and re-written.
+        :param self: input / output resulting Wavefront structure (instance of GenericWavefront2D);
+        :param filename: path to file for saving the wavefront
+        :param subgroupname: container mechanism by which HDF5 files are organised
+        :param intensity: writes intensity for sigma and pi polarisation (default=False)
+        :param amplitude:
+        :param phase:
+        :param overwrite: flag that should always be set to True to avoid infinity loop on the recursive part of the function.
+        :param verbose: if True, print some file i/o messages
+        """
+        try:
+            if not os.path.isfile(filename):  # if file doesn't exist, create it.
+                sys.stdout.flush()
+                f = h5py.File(filename, 'w')
+                # point to the default data to be plotted
+                f.attrs['default']          = 'entry'
+                # give the HDF5 root some more attributes
+                f.attrs['file_name']        = filename
+                f.attrs['file_time']        = time.time()
+                f.attrs['creator']          = 'save_wofry_wavefront_to_hdf5'
+                f.attrs['HDF5_Version']     = h5py.version.hdf5_version
+                f.attrs['h5py_version']     = h5py.version.version
+                f.close()
 
-            f[prefix+"_dimension"] = 1
-            f[prefix+"_photon_energy"] = self.get_photon_energy()
-            f[prefix+"_x"] = self.get_abscissas()
+            # always writes complex amplitude
+            x_polarization = self.get_complex_amplitude()       # sigma
+            # TODO: implement polarization
+            # y_polarization = self.get_complex_amplitude()*0.0   # pi
+
+            self._dump_arr_2_hdf5(x_polarization, "wfr_complex_amplitude_s", filename, subgroupname)
+            # self._dump_arr_2_hdf5(y_polarization.T, "wfr_complex_amplitude_p", filename, subgroupname)
+
 
             if intensity:
-                f[prefix+"_intensity"] = self.get_intensity()
+                self._dump_arr_2_hdf5(self.get_intensity(),"intensity/wfr_intensity", filename, subgroupname)
 
             if phase:
-                f[prefix+"_phase"] = self.get_phase()
+                self._dump_arr_2_hdf5(self.get_phase(),"phase/wfr_phase", filename, subgroupname)
 
-            if complex_amplitude:
-                ca = self.get_complex_amplitude()
-                f[prefix+"_complexamplitude_sigma"] = ca
-                f[prefix+"_complexamplitude_pi"] = numpy.zeros_like(ca)
+            # add mesh and SRW information
+            f = h5py.File(filename, 'a')
+            f1 = f[subgroupname]
 
-            print("File written to disk: "+filename)
+            # point to the default data to be plotted
+            f1.attrs['NX_class'] = 'NXentry'
+            f1.attrs['default'] = 'intensity'
+
+            # TODO: add self interpreting decoder
+            # f1["wfr_method"] = "WOFRY"
+            f1["wfr_dimension"] = 1
+            f1["wfr_photon_energy"] = self.get_photon_energy()
+            x = self.get_abscissas()
+
+
+            f1["wfr_mesh"] =  numpy.array([x[0],x[-1],x.size])
+
+
+            # Add NX plot attribites for automatic plot with silx view
+            myflags = [intensity,phase]
+            mylabels = ['intensity','phase']
+            for i,label in enumerate(mylabels):
+# nxdata = nxentry.create_group('mr_scan')
+# nxdata.attrs['NX_class'] = 'NXdata'
+# nxdata.attrs['signal'] = 'I00'      # Y axis of default plot
+# nxdata.attrs['axes'] = 'mr'         # X axis of default plot
+# nxdata.attrs['mr_indices'] = [0,]   # use "mr" as the first dimension of I00
+                if myflags[i]:
+                    f2 = f1[mylabels[i]]
+                    f2.attrs['NX_class'] = 'NXdata'
+                    f2.attrs['signal'] = 'wfr_%s'%(mylabels[i])
+                    f2.attrs['axes'] = b'axis_x'
+
+                    f3 = f2["wfr_%s"%(mylabels[i])]
+                    # f3.attrs['interpretation'] = 'image'
+
+
+                    # axis data
+                    ds = f2.create_dataset('axis_x', data=1e6*x)
+                    ds.attrs['units'] = 'microns'
+                    ds.attrs['long_name'] = 'Pixel Size (microns)'    # suggested Y axis plot label
             f.close()
+
         except:
-            raise Exception("Failed to save 1D wavefront to h5 file: "+filename)
+            # TODO: check exit??
+            if overwrite is not True:
+                raise Exception("Bad input argument")
+            os.remove(filename)
+            if verbose: print("save_h5_file: file deleted %s"%filename)
+            self.save_h5_file(filename,subgroupname, intensity=intensity, phase=phase, overwrite=False)
+
+        if verbose: print("save_h5_file: written/updated %s data in file: %s"%(subgroupname,filename))
 
     @classmethod
-    def load_h5_file(cls,filename,prefix=""):
+    def load_h5_file(cls,filename,filepath):
 
         try:
-            import h5py
-
             f = h5py.File(filename, 'r')
-            wfr = cls.initialize_wavefront_from_arrays(x_array=f[prefix+"_x"].value,
-                        y_array=f[prefix+"_complexamplitude_sigma"].value)
-            wfr.set_photon_energy(f[prefix+"_photon_energy"].value)
+            mesh = f[filepath+"/wfr_mesh"].value
+
+            complex_amplitude_s = f[filepath+"/wfr_complex_amplitude_s"].value
+            wfr = cls.initialize_wavefront_from_arrays(
+                                numpy.linspace(mesh[0],mesh[1],mesh[2]),
+                                complex_amplitude_s)
+            wfr.set_photon_energy(f[filepath+"/wfr_photon_energy"].value)
             f.close()
             return wfr
         except:
-            raise Exception("Failed to load 1D wavefront to h5 file: "+filename)
+            raise Exception("Failed to load 2D wavefront to h5 file: "+filename)
 
 if __name__ == "__main__":
-    w = GenericWavefront1D.initialize_wavefront_from_steps()
-    w2 = w.duplicate()
+    # w = GenericWavefront1D.initialize_wavefront_from_steps()
+    # w2 = w.duplicate()
+    pass
+

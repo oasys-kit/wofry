@@ -1,5 +1,6 @@
 import unittest
 import numpy
+import os
 
 from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
@@ -231,10 +232,12 @@ class GenericWavefront1DTest(unittest.TestCase):
     def test_save_load_h5_file(self):
         wfr = GenericWavefront1D.initialize_wavefront_from_range(-2.0,2.0,number_of_points=100)
         wfr.set_gaussian(.2,amplitude=5+8j)
-        wfr.save_h5_file("tmp.h5")
-
-        wfr2  = GenericWavefront1D.load_h5_file("tmp.h5")
-
+        print("Saving 1D wavefront to file: tmp.h5")
+        wfr.save_h5_file("tmp.h5","wfr1")
+        print("Reading 1D wavefront from file: tmp.h5")
+        wfr2  = GenericWavefront1D.load_h5_file("tmp.h5","wfr1")
+        print("Cleaning file tmp.h5")
+        os.remove("tmp.h5")
         assert(wfr2.is_identical(wfr))
 #
 # 2D tests
@@ -533,12 +536,20 @@ class GenericWavefront2DTest(unittest.TestCase):
 
 
     def test_save_load_h5_file(self):
-        wfr = GenericWavefront2D.initialize_wavefront_from_range(-2.0,2.0,-1.0,1.0,number_of_points=(100,100))
-        wfr.set_gaussian(.2,.1,amplitude=5+8j)
-        wfr.save_h5_file("tmp.h5")
 
-        wfr2  = GenericWavefront2D.load_h5_file("tmp.h5")
+        wfr = GenericWavefront2D.initialize_wavefront_from_range(-0.004,0.004,-0.001,0.001,(500,200))
+        wfr.set_gaussian(0.002/6,0.001/12)
+        wfr.save_h5_file("tmp_wofry.h5",subgroupname="wfr", intensity=True,phase=True,overwrite=True)
 
+        wfr.set_gaussian(0.002/6/2,0.001/12/2)
+        print("Writing file: tmp_wofry.h5")
+        wfr.save_h5_file("tmp_wofry.h5",subgroupname="wfr2", intensity=True,phase=False,overwrite=False)
+
+        # test same amplitudes:
+        print("Accessing file, path: ","tmp_wofry.h5","wfr2")
+        wfr2 = GenericWavefront2D.load_h5_file("tmp_wofry.h5","wfr2")
+        print("Cleaning file tmp_wofry.h5")
+        os.remove("tmp_wofry.h5")
         assert(wfr2.is_identical(wfr))
 
 
