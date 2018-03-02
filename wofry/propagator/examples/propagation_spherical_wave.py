@@ -74,8 +74,8 @@ propagation_elements.add_beamline_element(BeamlineElement(optical_element=screen
 parameters = PropagationParameters(wavefront=wavefront,
                                    propagation_elements=propagation_elements)
 parameters.set_additional_parameters("shift_half_pixel", 1)
-parameters.set_additional_parameters("magnification_x", 1.5)
-parameters.set_additional_parameters("magnification_y", 2.0)
+parameters.set_additional_parameters("magnification_x", 0.05)
+parameters.set_additional_parameters("magnification_y", 0.05)
 
 output_wf_1 = propagator.do_propagation(propagation_parameters=parameters,
                                         handler_name=Fresnel2D.HANDLER_NAME)

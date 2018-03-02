@@ -15,7 +15,7 @@ angstroms_to_eV = codata.h*codata.c/codata.e*1e10
 
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 from wofry.propagator.propagator import Propagator2D
-from wofry.propagator.test.srw_wavefront import WOSRWWavefront
+from wofry.propagator.examples import WOSRWWavefront
 
 class FresnelSRW(Propagator2D):
 

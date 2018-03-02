@@ -19,7 +19,7 @@ class FresnelZoom1D(Propagator1D):
         return self.do_specific_progation(wavefront, propagation_distance, parameters)
 
 
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
+    def do_specific_progation(self, wavefront1, propagation_distance, parameters):
 
 
         try:
@@ -27,6 +27,7 @@ class FresnelZoom1D(Propagator1D):
         except:
             m = 1.0
 
+        wavefront = wavefront1.duplicate()
         shape = wavefront.size()
         delta = wavefront.delta()
         wavenumber = wavefront.get_wavenumber()

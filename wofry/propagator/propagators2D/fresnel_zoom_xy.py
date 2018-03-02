@@ -49,12 +49,13 @@ class FresnelZoomXY2D(Propagator2D):
     :return: a new 2D wavefront object with propagated wavefront
     """
 
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
+    def do_specific_progation(self, wavefront1, propagation_distance, parameters):
         if not parameters.has_additional_parameter("shift_half_pixel"):
             shift_half_pixel = True
         else:
             shift_half_pixel = parameters.get_additional_parameter("shift_half_pixel")
 
+        wavefront = wavefront1.duplicate()
         shift_half_pixel = parameters.get_additional_parameter("shift_half_pixel")
 
         wavelength = wavefront.get_wavelength()
@@ -105,7 +106,6 @@ class FresnelZoomXY2D(Propagator2D):
 
         fft = numpy.fft.fft2(wavefront.get_complex_amplitude())
 
-        # TODO check intensities....
         ifft = numpy.fft.ifft2(fft * Q2) * Q3 / numpy.sqrt(m_x * m_y)
 
         # wf_propagated = Wavefront2D.initialize_wavefront_from_arrays(wavefront.get_coordinate_x() * m_x,
