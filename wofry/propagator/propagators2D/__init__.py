@@ -1,6 +1,7 @@
 
 from wofry.propagator.propagators2D.fraunhofer import Fraunhofer2D
-from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D
+from wofry.propagator.propagators2D.fresnel import Fresnel2D
+from wofry.propagator.propagators2D.fresnel_convolution import FresnelConvolution2D
 from wofry.propagator.propagators2D.integral import Integral2D
 from wofry.propagator.propagators2D.fresnel_zoom_xy import FresnelZoomXY2D
 from wofry.propagator.propagator import PropagationManager

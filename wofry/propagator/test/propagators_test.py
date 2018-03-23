@@ -29,14 +29,16 @@ if do_plot:
 
 
 from wofry.propagator.propagators2D.fraunhofer import Fraunhofer2D
-from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D
+from wofry.propagator.propagators2D.fresnel import Fresnel2D
+from wofry.propagator.propagators2D.fresnel_convolution import FresnelConvolution2D
 from wofry.propagator.propagators2D.integral import Integral2D
 from wofry.propagator.propagators2D import initialize_default_propagator_2D
 from wofry.propagator.propagators2D.fresnel_zoom_xy import FresnelZoomXY2D
 from wofry.propagator.propagators1D.fresnel_zoom import FresnelZoom1D
 
 from wofry.propagator.propagators1D.fraunhofer import Fraunhofer1D
-from wofry.propagator.propagators1D.fresnel import Fresnel1D, FresnelConvolution1D
+from wofry.propagator.propagators1D.fresnel import Fresnel1D
+from wofry.propagator.propagators1D.fresnel_convolution import FresnelConvolution1D
 from wofry.propagator.propagators1D.integral import Integral1D
 from wofry.propagator.propagators1D import initialize_default_propagator_1D
 
@@ -121,7 +123,8 @@ class propagatorTest(unittest.TestCase):
     def propagate_1D(self,do_plot=do_plot,method='fft',
                                 wavelength=1.24e-10,aperture_type='square',aperture_diameter=40e-6,
                                 wavefront_length=100e-6,npoints=500,
-                                propagation_distance = 30.0,show=1):
+                                propagation_distance = 30.0,normalization=True,show=1):
+
 
 
         print("\n#                                                            ")
@@ -174,10 +177,12 @@ class propagatorTest(unittest.TestCase):
         angle_x = wf1.get_abscissas() / propagation_distance
 
         intensity_theory = get_theoretical_diffraction_pattern(angle_x,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
-                                            wavelength=wavelength,normalization=True)
+                                            wavelength=wavelength,normalization=normalization)
 
         intensity_calculated =  wf1.get_intensity()
-        intensity_calculated /= intensity_calculated.max()
+
+        if normalization:
+            intensity_calculated /= intensity_calculated.max()
 
         if do_plot:
             from srxraylib.plot.gol import plot
@@ -198,6 +203,8 @@ class propagatorTest(unittest.TestCase):
     # tests/example cases for 1D propagators
     #
 
+
+    # @unittest.skip("classing skipping")
     def test_propagate_1D_fraunhofer_bis(self,do_plot=do_plot):
 
         aperture_type="square"
@@ -219,6 +226,7 @@ class propagatorTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
+    # @unittest.skip("classing skipping")
     def test_propagate_1D_fraunhofer_phase(self,do_plot=do_plot):
 
         # aperture_type="square"
@@ -295,7 +303,7 @@ class propagatorTest(unittest.TestCase):
         # TODO assert phase
         #numpy.testing.assert_almost_equal(1e3*intensity_fraunhofer,1e3*intensity_zoom,1)
 
-
+    # @unittest.skip("classing skipping")
     def test_propagate_1D_fft(self,do_plot=do_plot):
 
         aperture_type="square"
@@ -318,6 +326,7 @@ class propagatorTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
+    # @unittest.skip("classing skipping")
     def test_propagate_1D_fft_zoom(self,do_plot=do_plot):
 
         aperture_type="square"
@@ -340,7 +349,7 @@ class propagatorTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
-
+    # @unittest.skip("classing skipping")
     def test_propagate_1D_fresnel_convolution(self,do_plot=do_plot):
 
         aperture_type="square"
@@ -364,7 +373,7 @@ class propagatorTest(unittest.TestCase):
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
 
-
+    # @unittest.skip("classing skipping")
     def test_propagate_1D_integral(self,do_plot=do_plot):
 
         aperture_type="square"
@@ -386,6 +395,64 @@ class propagatorTest(unittest.TestCase):
                                 propagation_distance = propagation_distance, show=1)
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
+
+
+    # @unittest.skip("classing skipping")
+    def test_propagate_1D_compare_amplitudes(self,do_plot=do_plot):
+
+        # aperture_type="square"
+        # aperture_diameter = 40e-6
+        # wavefront_length = 800e-6
+        # wavelength = 1.24e-10
+        # propagation_distance = 30.0
+        # npoints=1024
+
+        aperture_type="square"
+        aperture_diameter = 100e-6
+        wavefront_length = 1000e-6
+        wavelength = 1.5e-10
+        propagation_distance = 5.0
+        npoints=2048
+
+
+        print("\n#                                                            ")
+        print("# near field 1D (integral) diffraction from a %s aperture  "%aperture_type)
+        print("#                                                            ")
+
+
+        #
+        # angle, intensity_calculated,intensity_theory_integral = self.propagate_1D(do_plot=do_plot,method="integral",
+        #                         wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
+        #                         wavefront_length=wavefront_length,npoints=npoints,
+        #                         propagation_distance = propagation_distance, show=1)
+
+
+        # compare with this one, the reference
+        angle_fft, intensity_calculated_fft,intensity_theory = self.propagate_1D(do_plot=False,method="fft",
+                                wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
+                                wavefront_length=wavefront_length,npoints=npoints,
+                                propagation_distance = propagation_distance, normalization=False, show=False)
+
+
+        for method in ["zoom","convolution","integral","fraunhofer"]:
+
+            angle_1, intensity_calculated_1,intensity_theory = self.propagate_1D(do_plot=False,method=method,
+                                    wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
+                                    wavefront_length=wavefront_length,npoints=npoints,
+                                    propagation_distance = propagation_distance, normalization=False, show=False)
+
+
+            x_fft = angle_fft * propagation_distance
+            x_1 = angle_1 * propagation_distance
+
+            ymax_all = [intensity_calculated_fft.max(),intensity_calculated_1.max()]
+            ymax = numpy.max(ymax_all)
+            print(">>>",ymax_all,numpy.sqrt(intensity_calculated_fft.max()/intensity_calculated_1.max()))
+            if do_plot:
+                plot(x_fft,intensity_calculated_fft,x_1,intensity_calculated_1,
+                     legend=["fft",method],yrange=[0,ymax],title="Comparing intensities - Not yet a test!",show=True)
+
+            # numpy.testing.assert_almost_equal(intensity_calculated_fft,intensity_calculated_1,1)
 
 
 class propagator2DTest(unittest.TestCase):
@@ -600,7 +667,7 @@ class propagator2DTest(unittest.TestCase):
     #
     # TESTS
     #
-
+    # @unittest.skip("classing skipping")
     def test_propagate_2D_fraunhofer(self,do_plot=do_plot,aperture_type='square',aperture_diameter=40e-6,
                     pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,wavelength=1.24e-10):
         """
@@ -696,7 +763,7 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
-
+    # @unittest.skip("classing skipping")
     def test_propagate_2D_fraunhofer_phase(self,do_plot=do_plot,aperture_type='square',
                                 aperture_diameter=40e-6,
                                 pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
@@ -809,7 +876,7 @@ class propagator2DTest(unittest.TestCase):
         # TODO: assert for phase
 
 
-
+    # @unittest.skip("classing skipping")
     def test_propagate_2D_fresnel_srw_square(self):
 
         if not SRWLIB_AVAILABLE:
@@ -824,6 +891,7 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
+    # @unittest.skip("classing skipping")
     def test_propagate_2D_fresnel_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='fft',aperture_type='square',
                                 aperture_diameter=40e-6,
@@ -832,6 +900,7 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
+    # @unittest.skip("classing skipping")
     def test_propagate_2D_fresnel_convolution_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='convolution',aperture_type='square',
                                 aperture_diameter=40e-6,
@@ -840,6 +909,7 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
+    # @unittest.skip("classing skipping")
     def test_propagate_2D_fresnel_integral_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='integral',aperture_type='square',
                                 aperture_diameter=40e-6,
@@ -848,11 +918,14 @@ class propagator2DTest(unittest.TestCase):
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
+    # @unittest.skip("classing skipping")
     def test_propagate_2D_zoom_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='zoom',aperture_type='square',
                                 aperture_diameter=40e-6,
                                 pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
                                 propagation_distance=30.0,wavelength=1.24e-10)
+
+    # @unittest.skip("classing skipping")
     def test_lens(self):
 
         lens_diameter = 0.002

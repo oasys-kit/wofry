@@ -128,4 +128,8 @@ class Integral2D(Propagator2D):
                                                                                    z_array=complex_amplitude_propagated,
                                                                                    wavelength=wavefront.get_wavelength())
 
-        return  output_wavefront
+        # added srio@esrf.eu 2018-03-23 to conserve energy - TODO: review method!
+        output_wavefront.rescale_amplitude( numpy.sqrt(wavefront.get_intensity().sum() /
+                                                    output_wavefront.get_intensity().sum()))
+
+        return output_wavefront

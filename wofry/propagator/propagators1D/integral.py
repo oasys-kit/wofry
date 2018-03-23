@@ -62,6 +62,13 @@ class Integral1D(Propagator1D):
             distances_matrix  = numpy.exp(1.j * wavenumber *  r)
             fieldComplexAmplitude = numpy.dot(wavefront.get_complex_amplitude(),distances_matrix)
 
-        return GenericWavefront1D(wavefront.get_wavelength(), ScaledArray.initialize_from_steps(fieldComplexAmplitude,
+
+        wavefront_out =  GenericWavefront1D(wavefront.get_wavelength(), ScaledArray.initialize_from_steps(fieldComplexAmplitude,
                                                                                                 detector_abscissas[0],
                                                                                                 detector_abscissas[1]-detector_abscissas[0]))
+
+        # added srio@esrf.eu 2018-03-23 to conserve energy - TODO: review method!
+        wavefront_out.rescale_amplitude( numpy.sqrt(wavefront.get_intensity().sum() /
+                                                    wavefront_out.get_intensity().sum()))
+
+        return wavefront_out

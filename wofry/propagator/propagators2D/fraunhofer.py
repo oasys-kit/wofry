@@ -95,9 +95,14 @@ class Fraunhofer2D(Propagator2D):
             x2 = x2 - 0.5 * numpy.abs(x2[1] - x2[0])
             y2 = y2 - 0.5 * numpy.abs(y2[1] - y2[0])
 
-        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=x2,
+        wavefront_out = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=x2,
                                                                             y_array=y2,
                                                                             z_array=F2,
                                                                             wavelength=wavelength)
 
-        return wf_propagated
+
+        # added srio@esrf.eu 2018-03-23 to conserve energy - TODO: review method!
+        wavefront_out.rescale_amplitude( numpy.sqrt(wavefront.get_intensity().sum() /
+                                                    wavefront_out.get_intensity().sum()))
+
+        return wavefront_out

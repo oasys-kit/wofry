@@ -51,4 +51,11 @@ class Fraunhofer1D(Propagator1D):
         fft = fft * p1 * p2 / p3
         fft2 = numpy.fft.fftshift(fft)
 
-        return GenericWavefront1D.initialize_wavefront_from_arrays(x2, fft2, wavelength=wavefront.get_wavelength())
+        wavefront_out =  GenericWavefront1D.initialize_wavefront_from_arrays(x2, fft2, wavelength=wavefront.get_wavelength())
+
+
+        # added srio@esrf.eu 2018-03-23 to conserve energy - TODO: review method!
+        wavefront_out.rescale_amplitude( numpy.sqrt(wavefront.get_intensity().sum() /
+                                                    wavefront_out.get_intensity().sum()))
+
+        return wavefront_out
