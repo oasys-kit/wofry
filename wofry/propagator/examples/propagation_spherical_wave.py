@@ -23,6 +23,15 @@ def initialize_default_propagator_2D():
     propagator.add_propagator(Integral2D())
     propagator.add_propagator(FresnelZoomXY2D())
 
+def guess_wavefront_curvature(wavefront,radius = 100.0):
+
+    complex_amplitude = wavefront.get_complex_amplitude()
+
+
+    new_complex_amplitude = complex_amplitude * numpy.exp( -1.0j * wavefront.get_wavenumber() *
+                            (wavefront.get_mesh_x()**2 + wavefront.get_mesh_y()**2) / (-2*radius) )
+
+
 
 if __name__ == "__main__":
 
