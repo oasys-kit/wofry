@@ -147,7 +147,7 @@ class PropagationManager(object):
             if propagator.is_handler(handler_name):
                 return propagator.do_propagation(parameters=propagation_parameters)
 
-        raise Exception("Handler not found")
+        raise Exception("Handler not found: "+handler_name)
 
 # ---------------------------------------------------------------
 

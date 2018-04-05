@@ -225,52 +225,56 @@ class GenericWavefront1D(Wavefront):
 
         return True
 
+
     #
-    # def save_h5_file(self,filename,prefix="",intensity=True,phase=True,complex_amplitude=True):
+    # auxiliary methods get main wavefront phase curvature (radius)
     #
-    #     try:
-    #         import h5py
-    #
-    #         f = h5py.File(filename, 'w')
-    #
-    #         f[prefix+"_dimension"] = 1
-    #         f[prefix+"_photon_energy"] = self.get_photon_energy()
-    #         f[prefix+"_x"] = self.get_abscissas()
-    #
-    #         if intensity:
-    #             f[prefix+"_intensity"] = self.get_intensity()
-    #
-    #         if phase:
-    #             f[prefix+"_phase"] = self.get_phase()
-    #
-    #         if complex_amplitude:
-    #             ca = self.get_complex_amplitude()
-    #             f[prefix+"_complexamplitude_sigma"] = ca
-    #             f[prefix+"_complexamplitude_pi"] = numpy.zeros_like(ca)
-    #
-    #         print("File written to disk: "+filename)
-    #         f.close()
-    #     except:
-    #         raise Exception("Failed to save 1D wavefront to h5 file: "+filename)
-    #
-    # @classmethod
-    # def load_h5_file(cls,filename,prefix=""):
-    #
-    #     try:
-    #         import h5py
-    #
-    #         f = h5py.File(filename, 'r')
-    #         wfr = cls.initialize_wavefront_from_arrays(x_array=f[prefix+"_x"].value,
-    #                     y_array=f[prefix+"_complexamplitude_sigma"].value)
-    #         wfr.set_photon_energy(f[prefix+"_photon_energy"].value)
-    #         f.close()
-    #         return wfr
-    #     except:
-    #         raise Exception("Failed to load 1D wavefront to h5 file: "+filename)
-    #
+    def _figure_of_merit(self,radius,weight_with_intensity=True):
+        """
+        Computes a "figure of merit" for finding the wavefront curvature.
+        A low value of the figure of metit means that the entered radius (checked)
+        corresponds to the redius of the wavefront,
+
+        :param radius:
+        :param weight_with_intensity:
+        :return: a positive scalar with the figure of merit
+        """
+        x = self.get_abscissas()
+        new_phase = 1.0 * self.get_wavenumber() * (x**2) / (-2 * radius)
+
+        wavefront2 = self.duplicate()
+        wavefront2.add_phase_shifts(new_phase)
+
+        if weight_with_intensity:
+            out = numpy.abs(wavefront2.get_phase()*wavefront2.get_intensity()).sum()
+        else:
+            out = numpy.abs(wavefront2.get_phase()).sum()
+
+        return out
+
+    def scan_wavefront_curvature(self,rmin=-10000.0,rmax=10000.0,rpoints=100):
+
+        radii = numpy.linspace(rmax,rmin,rpoints)
+        fig_of_mer = numpy.zeros_like(radii)
+
+        for i,radius in enumerate(radii):
+            fig_of_mer[i] =self._figure_of_merit(radius)
+
+        return radii,fig_of_mer
 
 
+    def guess_wavefront_curvature(self,rmin=-10000.0,rmax=10000.0,rpoints=100):
+        from scipy.optimize import minimize
+
+        radii,fig_of_mer = self.scan_wavefront_curvature(rmin=rmin,rmax=rmax,rpoints=rpoints)
+
+        res = minimize(self._figure_of_merit, radii[numpy.argmin(fig_of_mer)], args=self, method='powell',options={'xtol': 1e-8, 'disp': True})
+
+        return res.x
+
+    #
     # auxiliary function to dump h5 files
+    #
     def _dump_arr_2_hdf5(self,_arr,_calculation, _filename, _subgroupname):
         """
         Auxiliary routine to save_h5_file
@@ -404,5 +408,6 @@ class GenericWavefront1D(Wavefront):
 if __name__ == "__main__":
     # w = GenericWavefront1D.initialize_wavefront_from_steps()
     # w2 = w.duplicate()
-    pass
 
+
+    pass

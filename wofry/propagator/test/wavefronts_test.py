@@ -239,6 +239,26 @@ class GenericWavefront1DTest(unittest.TestCase):
         print("Cleaning file tmp.h5")
         os.remove("tmp.h5")
         assert(wfr2.is_identical(wfr))
+
+    def test_guess_wavefront_curvature(self):
+        print("#                                                             ")
+        print("# Tests guessing wavefront curvature                          ")
+        print("#                                                             ")
+        #
+        # create source
+        #
+        wavefront = GenericWavefront1D.initialize_wavefront_from_range(x_min=-0.5e-3,
+                                                                       x_max=0.5e-3,
+                                                                       number_of_points=2048,
+                                                                       wavelength=1.5e-10)
+        radius = -50.0 # 50.
+        wavefront.set_spherical_wave(radius=radius)
+        if do_plot:
+            from srxraylib.plot.gol import plot
+            radii,fig_of_mer = wavefront.scan_wavefront_curvature(rmin=-1000,rmax=1000,rpoints=100)
+            plot(radii,fig_of_mer)
+        guess_radius = wavefront.guess_wavefront_curvature(rmin=-1000,rmax=1000,rpoints=100)
+        assert(numpy.abs(radius - guess_radius) < 1e-3)
 #
 # 2D tests
 #
