@@ -11,8 +11,8 @@ except AttributeError:
 
 NAME = 'wofry'
 
-VERSION = '1.0.9'
-ISRELEASED = False
+VERSION = '1.0.10'
+ISRELEASED = True
 
 DESCRIPTION = 'WOFRY (Wave Optics FRamework in pYthon) kernel library'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.txt')
