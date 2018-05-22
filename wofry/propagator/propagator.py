@@ -48,6 +48,10 @@ from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 
 class PropagationElements(object):
+    
+    INSERT_AFTER = 0
+    INSERT_BEFORE = 1
+
     def __init__(self):
         self.__propagation_elements = []
 
@@ -61,6 +65,18 @@ class PropagationElements(object):
 
         for beamline_element in beamline_elements:
             self.add_beamline_element(beamline_element)
+
+    def insert_beamline_element(self, index, new_element=BeamlineElement(), mode=INSERT_BEFORE):
+        if mode == PropagationElements.INSERT_BEFORE:
+            if index == 0:
+                self.__propagation_elements = [new_element] + self.__propagation_elements
+            else:
+                self.__propagation_elements.insert(index, new_element)
+        elif mode == PropagationElements.INSERT_AFTER:
+            if index == len(self.__propagation_elements) - 1:
+                self.__propagation_elements = self.__propagation_elements + [new_element]
+            else:
+                self.__propagation_elements.insert(index+1, new_element)
 
     def get_propagation_elements_number(self):
         return len(self.__propagation_elements)
