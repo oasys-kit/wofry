@@ -44,8 +44,6 @@ class Singleton:
 from syned.beamline.beamline_element import BeamlineElement
 
 from wofry.propagator.wavefront  import Wavefront, WavefrontDimension
-from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
-from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 
 class PropagationElements(object):
     
@@ -135,10 +133,22 @@ class AbstractPropagator(object):
 
 @Singleton
 class PropagationManager(object):
+    ENABLED = True
+    DISABLED = False
 
     def __init__(self):
         self.__chains_hashmap = {WavefrontDimension.ONE : [],
                                  WavefrontDimension.TWO : []}
+
+        self.__interactive_mode = PropagationManager.ENABLED
+
+    @synchronized_method
+    def set_interactive_mode(self, enabled=ENABLED):
+        self.__interactive_mode=enabled
+
+    @synchronized_method
+    def get_interactive_mode(self):
+        return self.__interactive_mode
 
     @synchronized_method
     def add_propagator(self, propagator=AbstractPropagator()):
