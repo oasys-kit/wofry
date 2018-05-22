@@ -131,19 +131,21 @@ class AbstractPropagator(object):
                                   "\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)
 
 
-@Singleton
-class PropagationManager(object):
+class InteractiveMode:
     ENABLED = True
     DISABLED = False
+
+@Singleton
+class PropagationManager(object):
 
     def __init__(self):
         self.__chains_hashmap = {WavefrontDimension.ONE : [],
                                  WavefrontDimension.TWO : []}
 
-        self.__interactive_mode = PropagationManager.ENABLED
+        self.__interactive_mode = InteractiveMode.ENABLED
 
     @synchronized_method
-    def set_interactive_mode(self, enabled=ENABLED):
+    def set_interactive_mode(self, enabled=InteractiveMode.ENABLED):
         self.__interactive_mode=enabled
 
     @synchronized_method
