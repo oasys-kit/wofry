@@ -131,9 +131,12 @@ class AbstractPropagator(object):
                                   "\nreturns " + Wavefront.__module__ + "." + Wavefront.__name__)
 
 
-class InteractiveMode:
-    ENABLED = True
-    DISABLED = False
+class PropagationMode:
+    STEP_BY_STEP = 0
+    WHOLE_BEAMLINE = 1
+
+class PropagationApplication:
+    ALL = "All"
 
 @Singleton
 class PropagationManager(object):
@@ -142,15 +145,15 @@ class PropagationManager(object):
         self.__chains_hashmap = {WavefrontDimension.ONE : [],
                                  WavefrontDimension.TWO : []}
 
-        self.__interactive_mode = InteractiveMode.ENABLED
+        self.__propagation_mode_hashmap = {PropagationApplication.ALL : PropagationMode.STEP_BY_STEP}
 
     @synchronized_method
-    def set_interactive_mode(self, enabled=InteractiveMode.ENABLED):
-        self.__interactive_mode=enabled
+    def set_propagation_mode(self, application = PropagationApplication.ALL, mode=PropagationMode.STEP_BY_STEP):
+        self.__propagation_mode_hashmap[application] = mode
 
     @synchronized_method
-    def get_interactive_mode(self):
-        return self.__interactive_mode
+    def get_propagation_mode(self, application = PropagationApplication.ALL):
+        return self.__propagation_mode_hashmap[application]
 
     @synchronized_method
     def add_propagator(self, propagator=AbstractPropagator()):
