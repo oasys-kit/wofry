@@ -7,6 +7,7 @@ from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 
 from wofry.beamline.optical_elements.ideal_elements.lens import WOIdealLens, WOIdealLens1D
 
+from wofry.propagator.polarization import Polarization
 
 do_plot = False
 
@@ -259,6 +260,30 @@ class GenericWavefront1DTest(unittest.TestCase):
             plot(radii,fig_of_mer)
         guess_radius = wavefront.guess_wavefront_curvature(rmin=-1000,rmax=1000,rpoints=100)
         assert(numpy.abs(radius - guess_radius) < 1e-3)
+
+    def test_polarization(self):
+        print("#                                                             ")
+        print("# Tests polarization (1D)                                     ")
+        print("#                                                             ")
+        wavefront = GenericWavefront1D.initialize_wavefront_from_range(x_min=-0.5e-3,
+                                                                       x_max=0.5e-3,
+                                                                       number_of_points=2048,
+                                                                       wavelength=1.5e-10,
+                                                                       polarization=Polarization.TOTAL)
+
+        ca = numpy.zeros(wavefront.size())
+        wavefront.set_complex_amplitude(ca+(1+0j),ca+(0+1j))
+
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_phase(0.1e-3,polarization=Polarization.SIGMA),0.0 )
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_phase(-0.1e-3,polarization=Polarization.PI),numpy.pi/2 )
+
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_intensities(-0.111e-3,polarization=Polarization.TOTAL),2.0 )
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_intensities(-0.111e-3,polarization=Polarization.SIGMA),1.0 )
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_intensities(-0.111e-3,polarization=Polarization.PI),1.0 )
+
+        numpy.testing.assert_almost_equal(wavefront.get_intensity(polarization=Polarization.SIGMA),(ca+1)**2 )
+        numpy.testing.assert_almost_equal(wavefront.get_intensity(polarization=Polarization.PI),   (ca+1)**2 )
+        numpy.testing.assert_almost_equal(wavefront.get_intensity(polarization=Polarization.TOTAL),2*(ca+1)**2 )
 #
 # 2D tests
 #
@@ -573,7 +598,31 @@ class GenericWavefront2DTest(unittest.TestCase):
         os.remove("tmp_wofry.h5")
         assert(wfr2.is_identical(wfr))
 
+    def test_polarization(self):
+        print("#                                                             ")
+        print("# Tests polarization (2D)                                     ")
+        print("#                                                             ")
+        wavefront = GenericWavefront2D.initialize_wavefront_from_range(x_min=-0.5e-3,
+                                                                       x_max=0.5e-3,
+                                                                       y_min=-0.5e-3,
+                                                                       y_max=0.5e-3,
+                                                                       number_of_points=(2048,1024),
+                                                                       wavelength=1.5e-10,
+                                                                       polarization=Polarization.TOTAL)
 
+        ca = numpy.zeros(wavefront.size())
+        wavefront.set_complex_amplitude(ca+(1+0j),ca+(0+1j))
+        #
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_phase(0.1e-3,0.1e-3,polarization=Polarization.SIGMA),0.0 )
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_phase(-0.1e-3,0.1e-3,polarization=Polarization.PI),numpy.pi/2 )
+
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_intensities(-0.111e-3,-0.111e-3,polarization=Polarization.TOTAL),2.0 )
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_intensities(-0.111e-3,-0.111e-3,polarization=Polarization.SIGMA),1.0 )
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_intensities(-0.111e-3,-0.111e-3,polarization=Polarization.PI),1.0 )
+
+        numpy.testing.assert_almost_equal(wavefront.get_intensity(polarization=Polarization.SIGMA),(ca+1)**2 )
+        numpy.testing.assert_almost_equal(wavefront.get_intensity(polarization=Polarization.PI),   (ca+1)**2 )
+        numpy.testing.assert_almost_equal(wavefront.get_intensity(polarization=Polarization.TOTAL),2*(ca+1)**2 )
 
 
 

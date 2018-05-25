@@ -149,7 +149,7 @@ class GenericWavefront1D(Wavefront):
             return self._electric_field_array.np_array
         elif polarization == Polarization.PI:
             if self.is_polarized():
-                return self._electric_field_array_pi.get_z_values()
+                return self._electric_field_array_pi.np_array
             else:
                 raise Exception("Wavefront is not polarized.")
         else:
@@ -224,17 +224,17 @@ class GenericWavefront1D(Wavefront):
 
     def get_interpolated_intensity(self, abscissa_value, polarization=Polarization.SIGMA):
         if polarization == Polarization.TOTAL:
-            interpolated_complex_amplitude = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.SIGMA)**2
+            interpolated_complex_amplitude = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.SIGMA)
             if self.is_polarized():
-                interpolated_complex_amplitude_pi = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.PI)**2
+                interpolated_complex_amplitude_pi = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.PI)
                 return numpy.abs(interpolated_complex_amplitude)**2 + numpy.abs(interpolated_complex_amplitude_pi)**2
             else:
                 return numpy.abs(interpolated_complex_amplitude)**2
         elif polarization == Polarization.SIGMA:
-            interpolated_complex_amplitude = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.SIGMA)**2
+            interpolated_complex_amplitude = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.SIGMA)
             return numpy.abs(interpolated_complex_amplitude)**2
         elif polarization == Polarization.PI:
-            interpolated_complex_amplitude_pi = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.PI)**2
+            interpolated_complex_amplitude_pi = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.PI)
             return numpy.abs(interpolated_complex_amplitude_pi)**2
         else:
             raise Exception("Wrong polarization value.")
