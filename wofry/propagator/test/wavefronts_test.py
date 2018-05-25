@@ -233,7 +233,7 @@ class GenericWavefront1DTest(unittest.TestCase):
         wfr = GenericWavefront1D.initialize_wavefront_from_range(-2.0,2.0,number_of_points=100)
         wfr.set_gaussian(.2,amplitude=5+8j)
         print("Saving 1D wavefront to file: tmp.h5")
-        wfr.save_h5_file("tmp.h5","wfr1")
+        wfr.save_h5_file("tmp.h5","wfr1",intensity=True,phase=True)
         print("Reading 1D wavefront from file: tmp.h5")
         wfr2  = GenericWavefront1D.load_h5_file("tmp.h5","wfr1")
         print("Cleaning file tmp.h5")
@@ -503,6 +503,7 @@ class GenericWavefront2DTest(unittest.TestCase):
 
         wf = GenericWavefront2D.initialize_wavefront_from_steps(x[0],x[1]-x[0],y[0],y[1]-y[0],number_of_points=(100,50))
         print("wf shape: ",wf.size())
+        print("wf polarized: ",wf.is_polarized())
         wf.set_complex_amplitude( Z )
 
         x1 = 3.2

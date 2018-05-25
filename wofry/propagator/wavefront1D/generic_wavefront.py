@@ -11,6 +11,7 @@ from wofry.propagator.util.gaussian_schell_model import GaussianSchellModel1D
 import os
 import sys
 import time
+from wofry.propagator.polarization import Polarization
 try:
     import h5py
 except:
@@ -21,44 +22,96 @@ except:
 
 class GenericWavefront1D(Wavefront):
 
+    def __init__(self, wavelength=1e-10, electric_field_array=None, electric_field_array_pi=None):
+        self._wavelength = wavelength
+        self._electric_field_array = electric_field_array
+        self._electric_field_array_pi = electric_field_array_pi
+
     def get_dimension(self):
         return WavefrontDimension.ONE
 
-    def __init__(self, wavelength=1e-10, electric_field_array=None):
-        self._wavelength = wavelength
-        self._electric_field_array = electric_field_array
+    def is_polarized(self):
+        if self._electric_field_array_pi is None:
+            return False
+        else:
+            return True
 
     def duplicate(self):
-        return GenericWavefront1D(wavelength=self._wavelength,
-                                  electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_array.np_array),
-                                                                   scale=copy.copy(self._electric_field_array.scale)))
+        if self.is_polarized():
+            return GenericWavefront1D(wavelength=self._wavelength,
+                                      electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_array.np_array),
+                                                                       scale=copy.copy(self._electric_field_array.scale)),
+                                      electric_field_array_pi=ScaledArray(np_array=copy.copy(self._electric_field_array_pi.np_array),
+                                                                       scale=copy.copy(self._electric_field_array_pi.scale)) )
+        else:
+            return GenericWavefront1D(wavelength=self._wavelength,
+                                      electric_field_array=ScaledArray(np_array=copy.copy(self._electric_field_array.np_array),
+                                                                       scale=copy.copy(self._electric_field_array.scale)))
 
     @classmethod
-    def initialize_wavefront(cls, wavelength=1e-10, number_of_points=1000):
-        return GenericWavefront1D(wavelength, ScaledArray.initialize(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex)))
+    def initialize_wavefront(cls, wavelength=1e-10, number_of_points=1000, polarization=Polarization.SIGMA):
+
+        sA = ScaledArray.initialize(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex))
+
+        if ((polarization == Polarization.PI) or (polarization == Polarization.TOTAL)):
+            sA_pi = ScaledArray.initialize(np_array=numpy.full(number_of_points, (0.0 + 0.0j), dtype=complex))
+        else:
+            sA_pi = None
+
+        return GenericWavefront1D(wavelength, sA, sA_pi)
 
     @classmethod
-    def initialize_wavefront_from_steps(cls, x_start=-1.0, x_step=0.002, number_of_points=1000, wavelength=1e-10):
-        return GenericWavefront1D(wavelength, ScaledArray.initialize_from_steps(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex),
+    def initialize_wavefront_from_steps(cls, x_start=-1.0, x_step=0.002, number_of_points=1000, wavelength=1e-10, polarization=Polarization.SIGMA):
+
+        sA = ScaledArray.initialize_from_steps(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex),
                                                                          initial_scale_value=x_start,
-                                                                         scale_step=x_step))
-    @classmethod
-    def initialize_wavefront_from_range(cls, x_min=0.0, x_max=0.0, number_of_points=1000, wavelength=1e-10 ):
-        return GenericWavefront1D(wavelength, ScaledArray.initialize_from_range(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex),
-                                                                         min_scale_value=x_min,
-                                                                         max_scale_value=x_max))
+                                                                         scale_step=x_step)
+        if ((polarization == Polarization.PI) or (polarization == Polarization.TOTAL)):
+            sA_pi = ScaledArray.initialize_from_steps(np_array=numpy.full(number_of_points, (0.0 + 0.0j), dtype=complex),
+                                                                         initial_scale_value=x_start,
+                                                                         scale_step=x_step)
+        else:
+            sA_pi = None
+
+        return GenericWavefront1D(wavelength, sA, sA_pi)
 
     @classmethod
-    def initialize_wavefront_from_arrays(cls, x_array, y_array, wavelength=1e-10,):
+    def initialize_wavefront_from_range(cls, x_min=0.0, x_max=0.0, number_of_points=1000, wavelength=1e-10, polarization=Polarization.SIGMA ):
+
+        sA = ScaledArray.initialize_from_range(np_array=numpy.full(number_of_points, (1.0 + 0.0j), dtype=complex),
+                                                                         min_scale_value=x_min,
+                                                                         max_scale_value=x_max)
+
+        if ((polarization == Polarization.PI) or (polarization == Polarization.TOTAL)):
+            sA_pi = ScaledArray.initialize_from_range(np_array=numpy.full(number_of_points, (0.0 + 0.0j), dtype=complex),
+                                                                             min_scale_value=x_min,
+                                                                             max_scale_value=x_max)
+        else:
+            sA_pi = None
+        return GenericWavefront1D(wavelength, sA, sA_pi )
+
+    @classmethod
+    def initialize_wavefront_from_arrays(cls, x_array, y_array, y_array_pi=None, wavelength=1e-10):
         if x_array.size != y_array.size:
             raise Exception("Unmatched shapes for x and y")
 
-        return GenericWavefront1D(wavelength, ScaledArray.initialize_from_steps(np_array=y_array,
-                                                                                initial_scale_value=x_array[0],
-                                                                                scale_step=numpy.abs(x_array[1]-x_array[0])))
+        sA = ScaledArray.initialize_from_steps(np_array=y_array,
+                                               initial_scale_value=x_array[0],
+                                               scale_step=numpy.abs(x_array[1]-x_array[0]))
+
+        if y_array_pi is not None:
+            sA_pi = ScaledArray.initialize_from_steps(np_array=y_array_pi,
+                                                   initial_scale_value=x_array[0],
+                                                   scale_step=numpy.abs(x_array[1]-x_array[0]))
+        else:
+            sA_pi = None
+
+        return GenericWavefront1D(wavelength, sA, sA_pi)
 
 
     # main parameters
+
+    # grid
 
     def size(self):
         return self._electric_field_array.size()
@@ -68,6 +121,14 @@ class GenericWavefront1D(Wavefront):
 
     def offset(self):
         return self._electric_field_array.offset()
+
+    def get_abscissas(self):
+        return self._electric_field_array.scale
+
+    def get_mesh_x(self):
+        return self.get_abscissas()
+
+    # photon energy
 
     def get_wavelength(self):
         return self._wavelength
@@ -80,20 +141,25 @@ class GenericWavefront1D(Wavefront):
         return  m2ev / self._wavelength
 
 
-    def get_abscissas(self):
-        return self._electric_field_array.scale
+    # wavefront
 
-    def get_mesh_x(self):
-        return self.get_abscissas()
+    def get_complex_amplitude(self, polarization=Polarization.SIGMA):
 
-    def get_complex_amplitude(self):
-        return self._electric_field_array.np_array
+        if polarization == Polarization.SIGMA:
+            return self._electric_field_array.np_array
+        elif polarization == Polarization.PI:
+            if self.is_polarized():
+                return self._electric_field_array_pi.get_z_values()
+            else:
+                raise Exception("Wavefront is not polarized.")
+        else:
+            raise Exception("Only 0=SIGMA and 1=PI are valid polarization values.")
 
-    def get_amplitude(self):
-        return numpy.absolute(self.get_complex_amplitude())
+    def get_amplitude(self, polarization=Polarization.SIGMA):
+        return numpy.absolute(self.get_complex_amplitude(polarization=polarization))
 
-    def get_phase(self,from_minimum_intensity=0.0,unwrap=0):
-        phase = numpy.angle(self.get_complex_amplitude())
+    def get_phase(self,from_minimum_intensity=0.0,unwrap=0, polarization=Polarization.SIGMA):
+        phase = numpy.angle(self.get_complex_amplitude(polarization=polarization))
         if (from_minimum_intensity > 0.0):
             intensity = self.get_intensity()
             intensity /= intensity.max()
@@ -103,36 +169,96 @@ class GenericWavefront1D(Wavefront):
             phase = numpy.unwrap(phase)
         return phase
 
-    def get_intensity(self):
-        return self.get_amplitude()**2
+    def get_intensity(self, polarization=Polarization.SIGMA):
+        if polarization == Polarization.TOTAL:
+            if self.is_polarized():
+                return self.get_amplitude(polarization=Polarization.SIGMA)**2 + \
+                       self.get_amplitude(polarization=Polarization.PI)**2
+            else:
+                return self.get_amplitude(polarization=Polarization.SIGMA)**2
+        else:
+            return self.get_amplitude(polarization=polarization)**2
 
     # interpolated values
 
-    def get_interpolated_complex_amplitude(self, abscissa_value): # singular
-        return self._electric_field_array.interpolate_value(abscissa_value)
+    def get_interpolated_complex_amplitude(self, abscissa_value, polarization=Polarization.SIGMA): # singular
 
-    def get_interpolated_complex_amplitudes(self, abscissa_values): # plural
-        return self._electric_field_array.interpolate_values(abscissa_values)
+        if polarization == Polarization.SIGMA:
+            return self._electric_field_array.interpolate_value(abscissa_value)
+        elif polarization == Polarization.PI:
+            if self.is_polarized():
+                return self._electric_field_array_pi.interpolate_value(abscissa_value)
+            else:
+                raise Exception("Wavefront is not polarized.")
+        else:
+            raise Exception("Only 0=SIGMA and 1=PI are valid polarization values.")
 
-    def get_interpolated_amplitude(self, abscissa_value): # singular!
-        return numpy.absolute(self.get_interpolated_complex_amplitude(abscissa_value))
 
-    def get_interpolated_amplitudes(self, abscissa_values): # plural!
-        return numpy.absolute(self.get_interpolated_complex_amplitudes(abscissa_values))
+    def get_interpolated_complex_amplitudes(self, abscissa_values, polarization=Polarization.SIGMA): # plural
 
-    def get_interpolated_phase(self, abscissa_value): # singular!
-        complex_amplitude = self.get_interpolated_complex_amplitude(abscissa_value)
+        if polarization == Polarization.SIGMA:
+            return self._electric_field_array.interpolate_values(abscissa_values)
+        elif polarization == Polarization.PI:
+            if self.is_polarized():
+                return self._electric_field_array_pi.interpolate_values(abscissa_values)
+            else:
+                raise Exception("Wavefront is not polarized.")
+        else:
+            raise Exception("Only 0=SIGMA and 1=PI are valid polarization values.")
+
+
+
+    def get_interpolated_amplitude(self, abscissa_value, polarization=Polarization.SIGMA): # singular!
+        return numpy.absolute(self.get_interpolated_complex_amplitude(abscissa_value,polarization=polarization))
+
+    def get_interpolated_amplitudes(self, abscissa_values, polarization=Polarization.SIGMA): # plural!
+        return numpy.absolute(self.get_interpolated_complex_amplitudes(abscissa_values,polarization=polarization))
+
+    def get_interpolated_phase(self, abscissa_value, polarization=Polarization.SIGMA): # singular!
+        complex_amplitude = self.get_interpolated_complex_amplitude(abscissa_value, polarization=polarization)
         return numpy.arctan2(numpy.imag(complex_amplitude), numpy.real(complex_amplitude))
 
-    def get_interpolated_phases(self, abscissa_values): # plural!
-        complex_amplitudes = self.get_interpolated_complex_amplitudes(abscissa_values)
+    def get_interpolated_phases(self, abscissa_values, polarization=Polarization.SIGMA): # plural!
+        complex_amplitudes = self.get_interpolated_complex_amplitudes(abscissa_values, polarization=polarization)
         return numpy.arctan2(numpy.imag(complex_amplitudes), numpy.real(complex_amplitudes))
 
-    def get_interpolated_intensity(self, abscissa_value):
-        return self.get_interpolated_amplitude(abscissa_value)**2
+    def get_interpolated_intensity(self, abscissa_value, polarization=Polarization.SIGMA):
+        if polarization == Polarization.TOTAL:
+            interpolated_complex_amplitude = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.SIGMA)**2
+            if self.is_polarized():
+                interpolated_complex_amplitude_pi = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.PI)**2
+                return numpy.abs(interpolated_complex_amplitude)**2 + numpy.abs(interpolated_complex_amplitude_pi)**2
+            else:
+                return numpy.abs(interpolated_complex_amplitude)**2
+        elif polarization == Polarization.SIGMA:
+            interpolated_complex_amplitude = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.SIGMA)**2
+            return numpy.abs(interpolated_complex_amplitude)**2
+        elif polarization == Polarization.PI:
+            interpolated_complex_amplitude_pi = self.get_interpolated_amplitude(abscissa_value,polarization=Polarization.PI)**2
+            return numpy.abs(interpolated_complex_amplitude_pi)**2
+        else:
+            raise Exception("Wrong polarization value.")
 
-    def get_interpolated_intensities(self, abscissa_values):
-        return self.get_interpolated_amplitudes(abscissa_values)**2
+
+    def get_interpolated_intensities(self, abscissa_values, polarization=Polarization.SIGMA):
+        # return self.get_interpolated_amplitudes(abscissa_values,polarization=Polarization.SIGMA)**2
+
+        if polarization == Polarization.TOTAL:
+            interpolated_complex_amplitude = self.get_interpolated_complex_amplitude(abscissa_values,polarization=Polarization.SIGMA)
+            if self.is_polarized():
+                interpolated_complex_amplitude_pi = self.get_interpolated_complex_amplitude(abscissa_values,polarization=Polarization.PI)
+                return numpy.abs(interpolated_complex_amplitude)**2 + numpy.abs(interpolated_complex_amplitude_pi)**2
+            else:
+                return numpy.abs(interpolated_complex_amplitude)**2
+        elif polarization == Polarization.SIGMA:
+            interpolated_complex_amplitude = self.get_interpolated_complex_amplitude(abscissa_values,polarization=Polarization.SIGMA)
+            return numpy.abs(interpolated_complex_amplitude)**2
+        elif polarization == Polarization.PI:
+            interpolated_complex_amplitude_pi = self.get_interpolated_complex_amplitude(abscissa_values,polarization=Polarization.PI)
+            return numpy.abs(interpolated_complex_amplitude_pi)**2
+        else:
+            raise Exception("Wrong polarization value.")
+
 
     # modifiers
 
@@ -146,28 +272,46 @@ class GenericWavefront1D(Wavefront):
         m2ev = codata.c * codata.h / codata.e      # lambda(m)  = m2eV / energy(eV)
         self._wavelength = m2ev / photon_energy
 
-    def set_complex_amplitude(self, complex_amplitude):
+    def set_complex_amplitude(self, complex_amplitude, complex_amplitude_pi=None):
         if complex_amplitude.size != self._electric_field_array.size():
             raise Exception("Complex amplitude array has different dimension")
 
         self._electric_field_array.np_array = complex_amplitude
 
+        if complex_amplitude_pi is not None:
+            if self.is_polarized():
+                if complex_amplitude_pi.size != self._electric_field_array_pi.size():
+                    raise Exception("Complex amplitude array has different dimension")
+
+                self._electric_field_array_pi.np_array = complex_amplitude_pi
+            else:
+                raise Exception('Cannot set PI-polarized complex amplitude to a non-polarized wavefront.')
+
+    def set_pi_complex_amplitude_to_zero(self):
+        if self.is_polarized():
+            self._electric_field_array_pi.np_array *= 0.0
+
     def set_plane_wave_from_complex_amplitude(self, complex_amplitude=(1.0 + 0.0j), inclination=0.0):
         self._electric_field_array.np_array = numpy.full(self._electric_field_array.size(), complex_amplitude, dtype=complex)
         if inclination != 0.0:
             self.add_phase_shifts( self.get_wavenumber() * self._electric_field_array.scale * numpy.tan(inclination) )
+        # if polarized, set arbitrary PI component to zero
+        self.set_pi_complex_amplitude_to_zero()
 
     def set_plane_wave_from_amplitude_and_phase(self, amplitude=1.0, phase=0.0, inclination=0.0):
         self.set_plane_wave_from_complex_amplitude(amplitude*numpy.cos(phase) + 1.0j*amplitude*numpy.sin(phase))
         if inclination != 0.0:
             self.add_phase_shifts( self.get_wavenumber() * self._electric_field_array.scale * numpy.tan(inclination) )
+        # if polarized, set arbitrary PI component to zero
+        self.set_pi_complex_amplitude_to_zero()
 
     def set_spherical_wave(self, radius=1.0, center=0.0, complex_amplitude=1.0):
         if radius == 0: raise Exception("Radius cannot be zero")
 
         self._electric_field_array.np_array = complex_amplitude * numpy.exp(-1.0j * self.get_wavenumber() *
                                             ( (self._electric_field_array.scale - center)** 2) / (-2 * radius))
-
+        # if polarized, set arbitrary PI component to zero
+        self.set_pi_complex_amplitude_to_zero()
 
     def set_gaussian_hermite_mode(self, sigma_x, mode_x, amplitude=1.0, shift=0.0):
         a1D = GaussianSchellModel1D(amplitude, sigma_x, 100.0*sigma_x)
@@ -175,27 +319,77 @@ class GenericWavefront1D(Wavefront):
         real_amplitude = a1D.phi(mode_x, self.get_abscissas() - shift)
 
         self.set_complex_amplitude(real_amplitude+0.0j)
+        # if polarized, set arbitrary PI component to zero
+        self.set_pi_complex_amplitude_to_zero()
 
     # note that amplitude is for "amplitude" not for intensity!
     def set_gaussian(self, sigma_x, amplitude=1.0, shift=0.0):
         self.set_gaussian_hermite_mode(sigma_x, 0, amplitude=amplitude, shift=shift)
+        # if polarized, set arbitrary PI component to zero
+        self.set_pi_complex_amplitude_to_zero()
 
-    def add_phase_shift(self, phase_shift):
-        self._electric_field_array.np_array *= numpy.exp(1.0j * phase_shift)
+    def add_phase_shift(self, phase_shift, polarization=Polarization.SIGMA):
+        if polarization == Polarization.SIGMA:
+            self._electric_field_array.np_array *= numpy.exp(1.0j * phase_shift)
+        elif polarization == Polarization.PI:
+            if self.is_polarized():
+                self._electric_field_array_pi.np_array *= numpy.exp(1.0j * phase_shift)
+            else:
+                raise Exception("Wavefront is not polarized")
+        else:
+            raise Exception("Invalid polarization value (only 0=SIGMA or 1=PI are valid)")
 
-    def add_phase_shifts(self, phase_shifts):
-        if phase_shifts.size != self._electric_field_array.size():
-            raise Exception("Phase Shifts array has different dimension")
+    def add_phase_shifts(self, phase_shifts, polarization=Polarization.SIGMA):
 
-        self._electric_field_array.np_array =  numpy.multiply(self._electric_field_array.np_array, numpy.exp(1.0j * phase_shifts))
+        if polarization == Polarization.SIGMA:
+            if phase_shifts.size != self._electric_field_array.size():
+                raise Exception("Phase Shifts array has different dimension")
+            self._electric_field_array.np_array =  numpy.multiply(self._electric_field_array.np_array, numpy.exp(1.0j * phase_shifts))
+        elif polarization == Polarization.PI:
+            if self.is_polarized():
+                if phase_shifts.size != self._electric_field_array_pi.size():
+                    raise Exception("Phase Shifts array has different dimension")
+                self._electric_field_array_pi.np_array =  numpy.multiply(self._electric_field_array_pi.np_array, numpy.exp(1.0j * phase_shifts))
+            else:
+                raise Exception("Wavefront is not polarized")
+        else:
+            raise Exception("Invalid polarization value (only 0=SIGMA or 1=PI are valid)")
 
-    def rescale_amplitude(self, factor):
-        self._electric_field_array.np_array *= factor
 
-    def rescale_amplitudes(self, factors):
-        if factors.size != self._electric_field_array.size(): raise Exception("Factors array has different dimension")
+    def rescale_amplitude(self, factor, polarization=Polarization.SIGMA):
 
-        self._electric_field_array.np_array =  numpy.multiply(self._electric_field_array.np_array, factors)
+        if polarization == Polarization.SIGMA:
+            self._electric_field_array.np_array *= factor
+        elif polarization == Polarization.PI:
+            if self.is_polarized():
+                self._electric_field_array_pi.np_array *= factor
+            else:
+                raise Exception("Wavefront is not polarized")
+        elif polarization == Polarization.TOTAL:
+            self.rescale_amplitude(factor, polarization=Polarization.SIGMA)
+            self.rescale_amplitude(factor, polarization=Polarization.PI)
+        else:
+            raise Exception("Invalid polarization value (only 0=SIGMA, 1=PI or 3=TOTAL are valid)")
+
+
+    def rescale_amplitudes(self, factors, polarization=Polarization.SIGMA):
+
+
+        if polarization == Polarization.SIGMA:
+            if factors.size != self._electric_field_array.size(): raise Exception("Factors array has different dimension")
+            self._electric_field_array.np_array =  numpy.multiply(self._electric_field_array.np_array, factors)
+        elif polarization == Polarization.PI:
+            if self.is_polarized():
+                if factors.size != self._electric_field_array_pi.size(): raise Exception("Factors array has different dimension")
+                self._electric_field_array_pi.np_array =  numpy.multiply(self._electric_field_array_pi.np_array, factors)
+            else:
+                raise Exception("Wavefront is not polarized")
+        elif polarization == Polarization.TOTAL:
+            self.rescale_amplitudes(factors, polarization=Polarization.SIGMA)
+            self.rescale_amplitudes(factors, polarization=Polarization.PI)
+        else:
+            raise Exception("Invalid polarization value (only 0=SIGMA, 1=PI or 3=TOTAL are valid)")
+
 
     def clip(self, x_min, x_max, negative=False):
         window = numpy.ones(self._electric_field_array.size())
@@ -212,12 +406,20 @@ class GenericWavefront1D(Wavefront):
             if len(window_indices) > 0:
                 window[window_indices] = 0.0
 
-        self.rescale_amplitudes(window)
+        if self.is_polarized():
+            self.rescale_amplitudes(window,polarization=Polarization.TOTAL)
+        else:
+            self.rescale_amplitudes(window,polarization=Polarization.SIGMA)
 
     def is_identical(self,wfr,decimal=7):
         from numpy.testing import assert_array_almost_equal
         try:
             assert_array_almost_equal(self.get_complex_amplitude(),wfr.get_complex_amplitude(),decimal)
+            assert(self.is_polarized() == wfr.is_polarized())
+            if self.is_polarized():
+                assert_array_almost_equal(self.get_complex_amplitude(polarization=Polarization.PI),
+                                          wfr.get_complex_amplitude(polarization=Polarization.PI),decimal)
+
             assert_array_almost_equal(self.get_abscissas(),wfr.get_abscissas(),decimal)
             assert_array_almost_equal(self.get_photon_energy(),wfr.get_photon_energy(),decimal)
         except:
@@ -233,7 +435,9 @@ class GenericWavefront1D(Wavefront):
         """
         Computes a "figure of merit" for finding the wavefront curvature.
         A low value of the figure of metit means that the entered radius (checked)
-        corresponds to the redius of the wavefront,
+        corresponds to the radius of the wavefront.
+
+        If wavefront is polarized, the pi component is ignored.
 
         :param radius:
         :param weight_with_intensity:
@@ -315,25 +519,40 @@ class GenericWavefront1D(Wavefront):
                 # give the HDF5 root some more attributes
                 f.attrs['file_name']        = filename
                 f.attrs['file_time']        = time.time()
-                f.attrs['creator']          = 'save_wofry_wavefront_to_hdf5'
+                f.attrs['creator']          = 'oasys-wofry'
                 f.attrs['HDF5_Version']     = h5py.version.hdf5_version
                 f.attrs['h5py_version']     = h5py.version.version
                 f.close()
 
             # always writes complex amplitude
             x_polarization = self.get_complex_amplitude()       # sigma
-            # TODO: implement polarization
-            # y_polarization = self.get_complex_amplitude()*0.0   # pi
-
             self._dump_arr_2_hdf5(x_polarization, "wfr_complex_amplitude_s", filename, subgroupname)
-            # self._dump_arr_2_hdf5(y_polarization.T, "wfr_complex_amplitude_p", filename, subgroupname)
+            self._dump_arr_2_hdf5(x_polarization, "wfr_complex_amplitude_p", filename, subgroupname)
+
+            if self.is_polarized():
+                y_polarization = self.get_complex_amplitude(polarization=Polarization.PI)       # pi
+                self._dump_arr_2_hdf5(y_polarization, "wfr_complex_amplitude_p", filename, subgroupname)
+
 
 
             if intensity:
-                self._dump_arr_2_hdf5(self.get_intensity(),"intensity/wfr_intensity", filename, subgroupname)
+
+                if self.is_polarized():
+                    self._dump_arr_2_hdf5(self.get_intensity(polarization=Polarization.TOTAL),"intensity/wfr_intensity", filename, subgroupname)
+                    self._dump_arr_2_hdf5(self.get_intensity(polarization=Polarization.SIGMA),"intensity/wfr_intensity_s", filename, subgroupname)
+                    self._dump_arr_2_hdf5(self.get_intensity(polarization=Polarization.PI),"intensity/wfr_intensity_p", filename, subgroupname)
+                else:
+                    self._dump_arr_2_hdf5(self.get_intensity(),"intensity/wfr_intensity", filename, subgroupname)
 
             if phase:
-                self._dump_arr_2_hdf5(self.get_phase(),"phase/wfr_phase", filename, subgroupname)
+                if self.is_polarized():
+                    self._dump_arr_2_hdf5(self.get_phase(polarization=Polarization.SIGMA)-self.get_phase(polarization=Polarization.PI),
+                                          "phase/wfr_phase", filename, subgroupname)
+                    self._dump_arr_2_hdf5(self.get_phase(polarization=Polarization.SIGMA),"phase/wfr_phase_s", filename, subgroupname)
+                    self._dump_arr_2_hdf5(self.get_phase(polarization=Polarization.PI),"phase/wfr_phase_p", filename, subgroupname)
+                else:
+                    self._dump_arr_2_hdf5(self.get_phase(polarization=Polarization.SIGMA),"phase/wfr_phase", filename, subgroupname)
+
 
             # add mesh and SRW information
             f = h5py.File(filename, 'a')
