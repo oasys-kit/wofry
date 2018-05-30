@@ -146,6 +146,18 @@ class PropagationManager(object):
                                  WavefrontDimension.TWO : []}
 
         self.__propagation_mode_hashmap = {PropagationApplication.ALL : PropagationMode.STEP_BY_STEP}
+        self.__is_initialized_hashmap = {PropagationApplication.ALL : False}
+
+    @synchronized_method
+    def set_initialized(self, application = PropagationApplication.ALL, initialized=True):
+        self.__is_initialized_hashmap[application] = initialized
+
+    @synchronized_method
+    def is_initialized(self, application = PropagationApplication.ALL):
+        if application in self.__is_initialized_hashmap.keys():
+            return self.__is_initialized_hashmap[application]
+        else:
+            return False
 
     @synchronized_method
     def set_propagation_mode(self, application = PropagationApplication.ALL, mode=PropagationMode.STEP_BY_STEP):
@@ -172,6 +184,29 @@ class PropagationManager(object):
                 raise ValueError("Propagator already in the Chain")
 
         propagation_chain_of_responsibility.append(propagator)
+
+    @synchronized_method
+    def has_propagator(self, handler_name="<Propagator Name>", dimension=WavefrontDimension.ONE):
+        propagation_chain_of_responsibility = self.__chains_hashmap.get(dimension)
+
+        for existing in propagation_chain_of_responsibility:
+            if existing.get_handler_name() == handler_name: return True
+
+        return False
+
+    @synchronized_method
+    def get_propagators_number(self, dimension=None):
+        propagation_chain_of_responsibility_1D = self.__chains_hashmap.get(WavefrontDimension.ONE)
+        propagation_chain_of_responsibility_2D = self.__chains_hashmap.get(WavefrontDimension.TWO)
+
+        if dimension == None:
+            return len(propagation_chain_of_responsibility_1D), len(propagation_chain_of_responsibility_2D)
+        elif dimension == WavefrontDimension.ONE:
+            return len(propagation_chain_of_responsibility_1D)
+        elif dimension == WavefrontDimension.TWO:
+            return len(propagation_chain_of_responsibility_2D)
+        else:
+            raise ValueError("Dimension not valid " + str(dimension))
 
     def do_propagation(self, propagation_parameters, handler_name):
         for propagator in self.__chains_hashmap.get(propagation_parameters.get_wavefront().get_dimension()):
