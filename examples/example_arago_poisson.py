@@ -11,7 +11,8 @@ from wofry.beamline.optical_elements.ideal_elements.screen import WOScreen as Sc
 from wofry.propagator.propagator import PropagationManager, PropagationParameters
 from wofry.propagator.propagator import PropagationElements
 from wofry.propagator.propagators2D.fraunhofer import Fraunhofer2D
-from wofry.propagator.propagators2D.fresnel import Fresnel2D, FresnelConvolution2D
+from wofry.propagator.propagators2D.fresnel import Fresnel2D
+from wofry.propagator.propagators2D.fresnel_convolution import FresnelConvolution2D
 from wofry.propagator.propagators2D import initialize_default_propagator_2D
 
 propagator = PropagationManager.Instance()

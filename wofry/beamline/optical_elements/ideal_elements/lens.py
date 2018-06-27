@@ -6,7 +6,7 @@ from syned.beamline.optical_elements.ideal_elements.lens import IdealLens
 from wofry.beamline.decorators import OpticalElementDecorator
 
 class WOIdealLens(IdealLens, OpticalElementDecorator):
-    def __init__(self, name, focal_x, focal_y):
+    def __init__(self, name="Undefined", focal_x=1.0, focal_y=1.0):
         IdealLens.__init__(self, name, focal_x, focal_y)
 
     def applyOpticalElement(self, wavefront, parameters=None):
@@ -26,7 +26,7 @@ class WOIdealLens(IdealLens, OpticalElementDecorator):
         return wavefront
 
 class WOIdealLens1D(WOIdealLens):
-    def __init__(self, name, focal_length, plane='horizontal'):
+    def __init__(self, name="Undefined", focal_length=1.0, plane='horizontal'):
         if plane == 'horizontal':
             focal_length_x = focal_length
             focal_length_y = None
@@ -36,4 +36,4 @@ class WOIdealLens1D(WOIdealLens):
         else:
             raise Exception("invalid focusing plane: plane must be horizontal or vertical")
 
-        WOIdealLens.__init__(self, name, focal_length_x, focal_length_y)
+        WOIdealLens.__init__(self, name=name, focal_x=focal_length_x, focal_y=focal_length_y)

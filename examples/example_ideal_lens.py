@@ -382,11 +382,13 @@ def main(mode_wavefront_before_lens):
 
 if __name__ == "__main__":
 
-    mode_wavefront_before_lens = 'convergent spherical'
-    # mode_wavefront_before_lens = 'divergent spherical with lens'
-    # mode_wavefront_before_lens = 'plane with lens'
-    # mode_wavefront_before_lens = 'Gaussian with lens'
-    # mode_wavefront_before_lens = 'Hermite with lens'
-    # mode_wavefront_before_lens = 'Undulator with lens'
+    Mode_wavefront_before_lens = ['convergent spherical',
+                                  'divergent spherical with lens',
+                                  'plane with lens',
+                                  'Gaussian with lens',
+                                  'Hermite with lens',
+                                  'Undulator with lens']
 
-    main(mode_wavefront_before_lens)
+    for mode_wavefront_before_lens in Mode_wavefront_before_lens:
+        print(">>> mode_wavefront_before_lens is",mode_wavefront_before_lens)
+        main(mode_wavefront_before_lens)
