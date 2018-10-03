@@ -626,12 +626,34 @@ class GenericWavefront2DTest(unittest.TestCase):
 
 
 
+    def test_multiple_slit(self):
+        print("#                                                             ")
+        print("# Tests multiple slit (2D)                                     ")
+        print("#                                                             ")
+        wavefront = GenericWavefront2D.initialize_wavefront_from_range(x_min=-0.5e-3,
+                                                                       x_max=0.5e-3,
+                                                                       y_min=-0.5e-3,
+                                                                       y_max=0.5e-3,
+                                                                       number_of_points=(2048,1024),
+                                                                       wavelength=1.5e-10,
+                                                                       polarization=Polarization.TOTAL)
 
+        ca = numpy.zeros(wavefront.size())
+        wavefront.set_complex_amplitude(ca+(10+0j),ca+(0+1j))
+        #
 
+        window_circle = wavefront.clip_circle(50e-6,-2e-4,-2e-4,apply_to_wavefront=False)
+        window_rectangle = wavefront.clip_square(2e-4,3e-4,2e-4,3e-4,apply_to_wavefront=False)
+        window_ellipse = wavefront.clip_ellipse(50e-6,25e-6,-2e-4,2e-4,apply_to_wavefront=False)
+        window_ellipse2 = wavefront.clip_ellipse(50e-6,100e-6,2e-4,-2e-4,apply_to_wavefront=False)
 
+        wavefront.clip_window(window_circle+window_rectangle+window_ellipse+window_ellipse2)
 
+        if True:
+            from srxraylib.plot.gol import plot_image
+            plot_image(wavefront.get_intensity(),1e6*wavefront.get_coordinate_x(),1e6*wavefront.get_coordinate_y())
 
-
+        numpy.testing.assert_almost_equal(wavefront.get_interpolated_intensities(0,0,polarization=Polarization.TOTAL),0.0 )
 
 
 

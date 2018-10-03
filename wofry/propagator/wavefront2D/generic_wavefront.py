@@ -632,8 +632,15 @@ class GenericWavefront2D(Wavefront):
 
         return new_wf
 
-    def clip_square(self, x_min, x_max, y_min, y_max, negative=False):
+    def clip_window(self,window):
 
+        if self.is_polarized():
+            self.rescale_amplitude(window,polarization=Polarization.TOTAL)
+        else:
+            self.rescale_amplitudes(window,polarization=Polarization.SIGMA)
+
+    # todo: rename to rectangle!
+    def clip_square(self, x_min, x_max, y_min, y_max, negative=False, apply_to_wavefront=True):
 
         if not negative:
             window = numpy.ones(self._electric_field_matrix.shape())
@@ -659,14 +666,13 @@ class GenericWavefront2D(Wavefront):
             window_good = numpy.where( window > 0 )
             if len(window_good) > 0: window[window_good] = 1.0
 
+        if apply_to_wavefront:
+            self.clip_window(window)
 
-        if self.is_polarized():
-            self.rescale_amplitude(window,polarization=Polarization.TOTAL)
-        else:
-            self.rescale_amplitudes(window,polarization=Polarization.SIGMA)
+        return window
 
-    # new
-    def clip_circle(self, radius, x_center=0.0, y_center=0.0, negative=False):
+
+    def clip_circle(self, radius, x_center=0.0, y_center=0.0, negative=False, apply_to_wavefront=True):
         window = numpy.zeros(self._electric_field_matrix.shape())
         X = self.get_mesh_x()
         Y = self.get_mesh_y()
@@ -677,10 +683,30 @@ class GenericWavefront2D(Wavefront):
             indices_good = numpy.where(distance_to_center <= radius)
         window[indices_good] = 1.0
 
-        if self.is_polarized():
-            self.rescale_amplitude(window,polarization=Polarization.TOTAL)
+        if apply_to_wavefront:
+            self.clip_window(window)
+
+        return window
+
+    def clip_ellipse(self, axis_a, axis_b, x_center=0.0, y_center=0.0, negative=False, apply_to_wavefront=True):
+        window = numpy.zeros(self._electric_field_matrix.shape())
+        X = self.get_mesh_x()
+        Y = self.get_mesh_y()
+
+        TESTX= (X - x_center)**2 / (axis_a/2)**2 + (Y - y_center)**2 / (axis_b/2)**2 - 1.0
+        TESTX *= -1.0
+
+        if negative:
+            indices_good = numpy.where(TESTX  <= 0.0)
         else:
-            self.rescale_amplitudes(window,polarization=Polarization.SIGMA)
+            indices_good = numpy.where(TESTX >= 0.0)
+        window[indices_good] = 1.0
+
+        if apply_to_wavefront:
+            self.clip_window(window)
+
+        return window
+
 
     def is_identical(self,wfr,decimal=7):
         from numpy.testing import assert_array_almost_equal
