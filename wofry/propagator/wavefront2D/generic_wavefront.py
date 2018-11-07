@@ -354,6 +354,13 @@ class GenericWavefront2D(Wavefront):
             return self.get_amplitude(polarization=polarization)**2
 
 
+    def get_integrated_intensity(self, polarization=Polarization.SIGMA):
+        deltas =    (self.get_coordinate_x()[1] - self.get_coordinate_x()[0]) * \
+                    (self.get_coordinate_y()[1] - self.get_coordinate_y()[0])
+        return self.get_intensity(polarization=polarization).sum() * deltas
+
+
+
     # interpolated values
 
     def get_interpolated_complex_amplitude(self, x_value,y_value, polarization=Polarization.SIGMA):
