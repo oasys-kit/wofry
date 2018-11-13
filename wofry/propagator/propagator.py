@@ -66,7 +66,7 @@ class PropagationElements(object):
         if not element_parameters_list is None:
             if len(beamline_elements) != len(element_parameters_list): raise ValueError("Specific Parameters list does not match Beamline Elements list")
         else:
-            specific_parameters = [None]*len(beamline_elements)
+            element_parameters_list = [None]*len(beamline_elements)
             
         for beamline_element, element_parameters in zip(beamline_elements, element_parameters_list):
             self.add_beamline_element(beamline_element, element_parameters)
