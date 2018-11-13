@@ -52,29 +52,40 @@ class PropagationElements(object):
 
     def __init__(self):
         self.__propagation_elements = []
+        self.__propagation_element_parameters = []
 
-    def add_beamline_element(self, beamline_element=BeamlineElement()):
+    def add_beamline_element(self, beamline_element=BeamlineElement(), element_parameters=None):
         if beamline_element is None: raise ValueError("Beamline is None")
 
         self.__propagation_elements.append(beamline_element)
+        self.__propagation_element_parameters.append(element_parameters)
 
-    def add_beamline_elements(self, beamline_elements=[]):
+    def add_beamline_elements(self, beamline_elements=[], element_parameters_list=None):
         if beamline_elements is None: raise ValueError("Beamline is None")
-
-        for beamline_element in beamline_elements:
-            self.add_beamline_element(beamline_element)
-
-    def insert_beamline_element(self, index, new_element=BeamlineElement(), mode=INSERT_BEFORE):
+        
+        if not element_parameters_list is None:
+            if len(beamline_elements) != len(element_parameters_list): raise ValueError("Specific Parameters list does not match Beamline Elements list")
+        else:
+            specific_parameters = [None]*len(beamline_elements)
+            
+        for beamline_element, element_parameters in zip(beamline_elements, element_parameters_list):
+            self.add_beamline_element(beamline_element, element_parameters)
+        
+    def insert_beamline_element(self, index, new_element=BeamlineElement(), mode=INSERT_BEFORE, new_element_parameters=None):
         if mode == PropagationElements.INSERT_BEFORE:
             if index == 0:
                 self.__propagation_elements = [new_element] + self.__propagation_elements
+                self.__propagation_element_parameters = [new_element_parameters]
             else:
                 self.__propagation_elements.insert(index, new_element)
+                self.__propagation_element_parameters.insert(index, new_element_parameters)
         elif mode == PropagationElements.INSERT_AFTER:
             if index == len(self.__propagation_elements) - 1:
                 self.__propagation_elements = self.__propagation_elements + [new_element]
+                self.__propagation_element_parameters = self.__propagation_element_parameters + [new_element_parameters]
             else:
                 self.__propagation_elements.insert(index+1, new_element)
+                self.__propagation_element_parameters.insert(index+1, new_element_parameters)
 
     def get_propagation_elements_number(self):
         return len(self.__propagation_elements)
@@ -84,6 +95,14 @@ class PropagationElements(object):
 
     def get_propagation_element(self, index):
         return self.__propagation_elements[index]
+
+    def get_propagation_elements_specific_parameters(self):
+        return self.__propagation_element_parameters
+
+    def get_propagation_element_specific_parameter(self, index):
+        return self.__propagation_element_parameters[index]
+
+
 
 class PropagationParameters(object):
     def __init__(self,
