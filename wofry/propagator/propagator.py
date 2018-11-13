@@ -96,10 +96,10 @@ class PropagationElements(object):
     def get_propagation_element(self, index):
         return self.__propagation_elements[index]
 
-    def get_propagation_elements_specific_parameters(self):
+    def get_propagation_elements_parameters(self):
         return self.__propagation_element_parameters
 
-    def get_propagation_element_specific_parameter(self, index):
+    def get_propagation_element_parameter(self, index):
         return self.__propagation_element_parameters[index]
 
 
