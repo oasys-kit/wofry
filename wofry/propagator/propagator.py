@@ -241,17 +241,8 @@ class Propagator(AbstractPropagator):
     def do_propagation(self, parameters=PropagationParameters()):
         wavefront = parameters.get_wavefront()
 
-        propagation_elements = parameters.get_PropagationElements()
-        for element, parameters2 in zip(propagation_elements.get_propagation_elements(),
-                                       propagation_elements.get_propagation_elements_parameters()) :
+        for element in parameters.get_PropagationElements().get_propagation_elements():
             coordinates = element.get_coordinates()
-            if parameters2 is not None:
-                # the specific propagator parameters defined for each element are now stored.
-                # They overwrite the ones defined with the mechanism "set_additional_parameters" (if exist)
-                # note that they remain set for this element and next ones (so the set_additional_parameters
-                #   mechanism cannot be used as a default)
-                for key in parameters2.keys():
-                    parameters.set_additional_parameters(key, parameters2[key])
 
             if coordinates.p() != 0.0: wavefront = self.do_specific_progation_before(wavefront, coordinates.p(), parameters)
             wavefront = element.get_optical_element().applyOpticalElement(wavefront, parameters)
