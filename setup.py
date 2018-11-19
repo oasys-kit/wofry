@@ -49,7 +49,7 @@ CLASSIFIERS = (
 )
 
 INSTALL_REQUIRES = (
-    'syned>=1.0.9',
+    'syned>=1.0.11',
     'h5py'
 )
 
