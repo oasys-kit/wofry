@@ -12,14 +12,14 @@ class FresnelZoomScaling1D(Propagator1D):
     def get_handler_name(self):
         return self.HANDLER_NAME
 
-    def do_specific_progation_after(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=None)
 
-    def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
 
 
-    def do_specific_progation(self, wavefront1, propagation_distance1, parameters):
+    def do_specific_progation(self, wavefront1, propagation_distance1, parameters, element_index=None):
 
 
         try:

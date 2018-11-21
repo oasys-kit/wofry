@@ -11,11 +11,11 @@ class Fraunhofer1D(Propagator1D):
     def get_handler_name(self):
         return self.HANDLER_NAME
 
-    def do_specific_progation_after(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters=None, element_index=None):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters=None, element_index=None)
 
-    def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters=None, element_index=None):
+        return self.do_specific_progation( wavefront, propagation_distance, parameters=None, element_index=None)
 
     """
     1D Fraunhofer propagator using convolution via Fourier transform
@@ -26,7 +26,7 @@ class Fraunhofer1D(Propagator1D):
     """
 
     # TODO: check resulting amplitude normalization
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
+    def do_specific_progation(self, wavefront, propagation_distance, parameters=None, element_index=None):
 
         shape = wavefront.size()
         delta = wavefront.delta()

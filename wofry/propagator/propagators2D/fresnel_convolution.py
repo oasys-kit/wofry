@@ -36,11 +36,11 @@ class FresnelConvolution2D(Propagator2D):
         return self.HANDLER_NAME
 
 
-    def do_specific_progation_after(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=None)
 
-    def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
 
     """
     2D Fresnel propagator using convolution via Fourier transform
@@ -50,7 +50,7 @@ class FresnelConvolution2D(Propagator2D):
     :return: a new 2D wavefront object with propagated wavefront
     """
 
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
+    def do_specific_progation(self, wavefront, propagation_distance, parameters, element_index=None):
 
         is_generic_wavefront = isinstance(wavefront, GenericWavefront2D)
 
