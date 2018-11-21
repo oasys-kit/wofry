@@ -41,21 +41,20 @@ class Integral2D(Propagator2D):
     """
 
     def do_specific_progation(self, wavefront, propagation_distance, parameters, element_index=None):
-        if not parameters.has_additional_parameter("shuffle_interval"):
-            shuffle_interval = 0
-        else:
-            shuffle_interval = parameters.get_additional_parameter("shuffle_interval")
 
-        if not parameters.has_additional_parameter("calculate_grid_only"):
-            calculate_grid_only = 1
-        else:
-            calculate_grid_only = parameters.get_additional_parameter("calculate_grid_only")
+        shuffle_interval = self.get_additional_parameter("shuffle_interval",False,parameters,element_index=element_index)
+        calculate_grid_only = self.get_additional_parameter("calculate_grid_only",True,parameters,element_index=element_index)
 
+        return self.propagate_wavefront(wavefront,propagation_distance,shuffle_interval=shuffle_interval,
+                                 calculate_grid_only=calculate_grid_only)
+
+    @classmethod
+    def propagate_wavefront(cls,wavefront,propagation_distance,shuffle_interval=False,calculate_grid_only=True):
         #
         # Fresnel-Kirchhoff integral (neglecting inclination factor)
         #
 
-        if calculate_grid_only == 0:
+        if not calculate_grid_only:
             #
             # calculation over the whole detector area
             #
@@ -80,7 +79,7 @@ class Integral2D(Propagator2D):
 
             for i in range(det_x.size):
                 for j in range(det_y.size):
-                    if shuffle_interval == 0:
+                    if not shuffle_interval:
                         rd_x = 0.0
                         rd_y = 0.0
                     else:

@@ -23,8 +23,6 @@
 import numpy
 import scipy.constants as codata
 
-angstroms_to_eV = codata.h*codata.c/codata.e*1e10
-
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 from wofry.propagator.propagator import Propagator2D
 
@@ -41,6 +39,7 @@ class FresnelZoomXY2D(Propagator2D):
     def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
         return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
 
+
     """
     2D Fresnel propagator using convolution via Fourier transform
     :param wavefront:
@@ -50,26 +49,26 @@ class FresnelZoomXY2D(Propagator2D):
     """
 
     def do_specific_progation(self, wavefront1, propagation_distance, parameters, element_index=None):
-        if not parameters.has_additional_parameter("shift_half_pixel"):
-            shift_half_pixel = True
-        else:
-            shift_half_pixel = parameters.get_additional_parameter("shift_half_pixel")
+
+        shift_half_pixel = self.get_additional_parameter("shift_half_pixel",False,parameters,element_index=element_index)
+        m_x = self.get_additional_parameter("magnification_x",1.0,parameters,element_index=element_index)
+        m_y = self.get_additional_parameter("magnification_y",1.0,parameters,element_index=element_index)
+
+        return self.propagate_wavefront(wavefront1,propagation_distance, magnification_x=m_x, magnification_y=m_y,shift_half_pixel=shift_half_pixel)
+
+
+    @classmethod
+    def propagate_wavefront(cls,wavefront1,propagation_distance,magnification_x=1.0,magnification_y=1.0,shift_half_pixel=False):
+
 
         wavefront = wavefront1.duplicate()
-        shift_half_pixel = parameters.get_additional_parameter("shift_half_pixel")
-
         wavelength = wavefront.get_wavelength()
-
-
         wavenumber = wavefront.get_wavenumber()
-
-        m_x = parameters.get_additional_parameter("magnification_x")
-        m_y = parameters.get_additional_parameter("magnification_y")
 
         shape = wavefront.size()
         delta = wavefront.delta()
 
-        pixelsize = delta[0]  # p_x[1] - p_x[0]
+        pixelsize = delta[0]
         npixels = shape[0]
         freq_nyquist = 0.5 / pixelsize
         freq_n = numpy.linspace(-1.0, 1.0, npixels)
@@ -87,16 +86,16 @@ class FresnelZoomXY2D(Propagator2D):
             freq_y = freq_y - 0.5 * numpy.abs(freq_y[1] - freq_y[0])
 
         f_x, f_y = numpy.meshgrid(freq_x, freq_y, indexing='ij')
-        fsq = numpy.fft.fftshift(f_x ** 2 / m_x + f_y ** 2 / m_y)
+        fsq = numpy.fft.fftshift(f_x ** 2 / magnification_x + f_y ** 2 / magnification_y)
 
         x = wavefront.get_mesh_x()
         y = wavefront.get_mesh_y()
 
-        x_rescaling = wavefront.get_mesh_x() * m_x
-        y_rescaling = wavefront.get_mesh_y() * m_y
+        x_rescaling = wavefront.get_mesh_x() * magnification_x
+        y_rescaling = wavefront.get_mesh_y() * magnification_y
 
-        r1sq = x ** 2 * (1 - m_x) + y ** 2 * (1 - m_y)
-        r2sq = x_rescaling ** 2 * ((m_x - 1) / m_x) + y_rescaling ** 2 * ((m_y - 1) / m_y)
+        r1sq = x ** 2 * (1 - magnification_x) + y ** 2 * (1 - magnification_y)
+        r2sq = x_rescaling ** 2 * ((magnification_x - 1) / magnification_x) + y_rescaling ** 2 * ((magnification_y - 1) / magnification_y)
 
         Q1 = wavenumber / 2 / propagation_distance * r1sq
         Q2 = numpy.exp(-1.0j * numpy.pi * wavelength * propagation_distance * fsq)
@@ -106,80 +105,11 @@ class FresnelZoomXY2D(Propagator2D):
 
         fft = numpy.fft.fft2(wavefront.get_complex_amplitude())
 
-        ifft = numpy.fft.ifft2(fft * Q2) * Q3 / numpy.sqrt(m_x * m_y)
+        ifft = numpy.fft.ifft2(fft * Q2) * Q3 / numpy.sqrt(magnification_x * magnification_y)
 
-        # wf_propagated = Wavefront2D.initialize_wavefront_from_arrays(wavefront.get_coordinate_x() * m_x,
-        #                                                              ####################NON SONO SICURO CHE SIA GIUSTO QUELLO CHE RETURN
-        #                                                              wavefront.get_coordinate_y() * m_y,
-        #                                                              ifft,
-        #                                                              wavelength=wavelength)
-        #===============
-        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=wavefront.get_coordinate_x()*m_x,
-                                                                            y_array=wavefront.get_coordinate_y()*m_y,
+        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=wavefront.get_coordinate_x()*magnification_x,
+                                                                            y_array=wavefront.get_coordinate_y()*magnification_y,
                                                                             z_array=ifft,
                                                                             wavelength=wavelength)
-
         return wf_propagated
 
-class FresnelConvolution2D(Propagator2D):
-
-    HANDLER_NAME = "FRESNEL_CONVOLUTION_2D"
-
-    def get_handler_name(self):
-        return self.HANDLER_NAME
-
-
-    def do_specific_progation_after(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
-
-    def do_specific_progation_before(self, wavefront, propagation_distance, parameters):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters)
-
-    """
-    2D Fresnel propagator using convolution via Fourier transform
-    :param wavefront:
-    :param propagation_distance: propagation distance
-    :param shift_half_pixel: set to 1 to shift half pixel (recommended using an even number of pixels) Set as default.
-    :return: a new 2D wavefront object with propagated wavefront
-    """
-
-    def do_specific_progation(self, wavefront, propagation_distance, parameters):
-
-        is_generic_wavefront = isinstance(wavefront, GenericWavefront2D)
-
-        if is_generic_wavefront:
-            pass
-        else:
-            wavefront_original = wavefront
-            wavefront = wavefront.toGenericWavefront()
-
-        if not parameters.has_additional_parameter("shift_half_pixel"):
-            shift_half_pixel = True
-        else:
-            shift_half_pixel = parameters.get_additional_parameter("shift_half_pixel")
-
-        from scipy.signal import fftconvolve
-
-        wavelength = wavefront.get_wavelength()
-
-        X = wavefront.get_mesh_x()
-        Y = wavefront.get_mesh_y()
-
-        if shift_half_pixel:
-            x = wavefront.get_coordinate_x()
-            y = wavefront.get_coordinate_y()
-            X += 0.5 * numpy.abs( x[0] - x[1] )
-            Y += 0.5 * numpy.abs( y[0] - y[1] )
-
-        kernel = numpy.exp(1j*2*numpy.pi/wavefront.get_wavelength() *
-                           (X**2 + Y**2) / 2 / propagation_distance)
-        kernel *= numpy.exp(1j*2*numpy.pi/wavefront.get_wavelength() * propagation_distance)
-        kernel /=  1j * wavefront.get_wavelength() * propagation_distance
-
-        wf_propagated = GenericWavefront2D.initialize_wavefront_from_arrays(x_array=wavefront.get_coordinate_x(),
-                                                                            y_array=wavefront.get_coordinate_y(),
-                                                                            z_array=fftconvolve(wavefront.get_complex_amplitude(),
-                                                                                                kernel,
-                                                                                                mode='same'),
-                                                                            wavelength=wavelength)
-        return wf_propagated

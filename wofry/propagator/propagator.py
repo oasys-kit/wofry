@@ -258,6 +258,25 @@ class Propagator(AbstractPropagator):
     def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
         raise NotImplementedError("This method is abstract")
 
+    def get_additional_parameter(self, parameter_name, default_value, propagation_parameters, element_index=None, ):
+        value = default_value
+        try:
+            value = propagation_parameters.get_additional_parameter(parameter_name)
+        except:
+            pass
+
+        if element_index is None:
+            myindex = 0
+        else:
+            myindex = element_index
+
+        parameters_dict = propagation_parameters.get_PropagationElements().get_propagation_element_parameter(myindex)
+
+        if parameters_dict is not None:
+            if parameter_name in parameters_dict.keys():
+                value = parameters_dict[parameter_name]
+
+        return value
 
 
 class Propagator1D(Propagator):

@@ -12,20 +12,21 @@ class FresnelZoom1D(Propagator1D):
     def get_handler_name(self):
         return self.HANDLER_NAME
 
-    def do_specific_progation_after(self, wavefront, propagation_distance, parameters=None, element_index=None):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters=None, element_index=None)
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=None)
 
-    def do_specific_progation_before(self, wavefront, propagation_distance, parameters=None, element_index=None):
-        return self.do_specific_progation( wavefront, propagation_distance, parameters=None, element_index=None)
-
-
-    def do_specific_progation(self, wavefront1, propagation_distance, parameters=None, element_index=None):
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
 
 
-        try:
-            m = parameters.get_additional_parameter("magnification_x")
-        except:
-            m = 1.0
+    def do_specific_progation(self, wavefront1, propagation_distance, parameters, element_index=None):
+
+        magnification_x = self.get_additional_parameter("magnification_x",1.0,parameters,element_index=element_index)
+
+        return self.propagate_wavefront(wavefront1,propagation_distance,magnification_x=magnification_x)
+
+    @classmethod
+    def propagate_wavefront(cls,wavefront1,propagation_distance,magnification_x=1.0):
 
         wavefront = wavefront1.duplicate()
         shape = wavefront.size()
@@ -37,11 +38,11 @@ class FresnelZoom1D(Propagator1D):
 
         x = wavefront.get_abscissas()
 
-        x_rescaling = wavefront.get_abscissas() * m
+        x_rescaling = wavefront.get_abscissas() * magnification_x
 
-        r1sq = x ** 2 * (1 - m)
-        r2sq = x_rescaling ** 2 * ((m - 1) / m)
-        fsq = (fft_scale ** 2 / m)
+        r1sq = x ** 2 * (1 - magnification_x)
+        r2sq = x_rescaling ** 2 * ((magnification_x - 1) / magnification_x)
+        fsq = (fft_scale ** 2 / magnification_x)
 
         Q1 = wavenumber / 2 / propagation_distance * r1sq
         Q2 = numpy.exp(-1.0j * numpy.pi * wavelength * propagation_distance * fsq)
@@ -50,7 +51,7 @@ class FresnelZoom1D(Propagator1D):
         wavefront.add_phase_shift(Q1)
 
         fft = numpy.fft.fft(wavefront.get_complex_amplitude())
-        ifft = numpy.fft.ifft(fft * Q2) * Q3 / numpy.sqrt(m)
+        ifft = numpy.fft.ifft(fft * Q2) * Q3 / numpy.sqrt(magnification_x)
 
         wf_propagated = GenericWavefront1D.initialize_wavefront_from_arrays(x_rescaling,
                                                                             ifft,

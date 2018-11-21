@@ -26,6 +26,10 @@ class FresnelConvolution1D(Propagator1D):
     def do_specific_progation(self, wavefront, propagation_distance, parameters=None, element_index=None):
         # instead of numpy.convolve, this can be used:
         # from scipy.signal import fftconvolve
+        return self.propagate_wavefront(wavefront,propagation_distance)
+
+    @classmethod
+    def propagate_wavefront(cls,wavefront,propagation_distance):
 
         kernel = numpy.exp(1j*2*numpy.pi/wavefront.get_wavelength() * wavefront.get_abscissas()**2 / 2 / propagation_distance)
         kernel *= numpy.exp(1j*2*numpy.pi/wavefront.get_wavelength() * propagation_distance)

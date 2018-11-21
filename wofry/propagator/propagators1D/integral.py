@@ -11,25 +11,23 @@ class Integral1D(Propagator1D):
     def get_handler_name(self):
         return self.HANDLER_NAME
 
-    def do_specific_progation_after(self, wavefront, propagation_distance, parameters=None, element_index=None):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters=None, element_index=None)
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=None)
 
-    def do_specific_progation_before(self, wavefront, propagation_distance, parameters=None, element_index=None):
-        return self.do_specific_progation( wavefront, propagation_distance, parameters=None, element_index=None)
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
 
     # 1D Fresnel-Kirchhoff propagator via simplified integral
-    def do_specific_progation(self, wavefront, propagation_distance, parameters=None, element_index=None):
+    def do_specific_progation(self, wavefront, propagation_distance, parameters, element_index=None):
 
-        try:
-            mX = parameters.get_additional_parameter("magnification_x")
-        except:
-            mX = 1.0
+        magnification_N = self.get_additional_parameter("magnification_N",1.0,parameters,element_index=element_index)
+        magnification_x = self.get_additional_parameter("magnification_x",1.0,parameters,element_index=element_index)
 
-        try:
-            mN = parameters.get_additional_parameter("magnification_N")
-        except:
-            mN = 1.0
+        return self.propagate_wavefront(wavefront,propagation_distance,magnification_x=magnification_x,
+                                        magnification_N=magnification_N)
 
+    @classmethod
+    def propagate_wavefront(cls,wavefront,propagation_distance,magnification_x=1.0,magnification_N=1.0):
         method = 0
 
         wavenumber = numpy.pi*2/wavefront.get_wavelength()
@@ -37,12 +35,12 @@ class Integral1D(Propagator1D):
         x = wavefront.get_abscissas()
 
 
-        if mN != 1.0:
-            npoints_exit = int(mN * x.size)
+        if magnification_N != 1.0:
+            npoints_exit = int(magnification_N * x.size)
         else:
             npoints_exit = x.size
 
-        detector_abscissas = numpy.linspace(mX*x[0],mX*x[-1],npoints_exit)
+        detector_abscissas = numpy.linspace(magnification_x*x[0],magnification_x*x[-1],npoints_exit)
 
         if method == 0:
             # calculate via loop pver detector coordinates

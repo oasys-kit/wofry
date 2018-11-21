@@ -21,14 +21,13 @@ class FresnelZoomScaling1D(Propagator1D):
 
     def do_specific_progation(self, wavefront1, propagation_distance1, parameters, element_index=None):
 
+        magnification_x = self.get_additional_parameter("magnification_x",1.0,parameters,element_index=element_index)
+        radius = self.get_additional_parameter("radius",1e6,parameters,element_index=element_index)
 
-        try:
-            m = parameters.get_additional_parameter("magnification_x")
-        except:
-            m = 1.0
+        return self.propagate_wavefront(wavefront1,propagation_distance1,magnification_x=magnification_x,radius=radius)
 
-        radius = parameters.get_additional_parameter("radius")
-
+    @classmethod
+    def propagate_wavefront(cls,wavefront1,propagation_distance1,magnification_x=1.0,radius=1e6):
         wavefront = wavefront1.duplicate()
         shape = wavefront.size()
         delta = wavefront.delta()
@@ -53,11 +52,11 @@ class FresnelZoomScaling1D(Propagator1D):
 
         x = wavefront.get_abscissas()
 
-        x_rescaling = wavefront.get_abscissas() * m
+        x_rescaling = wavefront.get_abscissas() * magnification_x
 
-        r1sq = x ** 2 * (1 - m)
-        r2sq = x_rescaling ** 2 * ((m - 1) / m)
-        fsq = (fft_scale ** 2 / m)
+        r1sq = x ** 2 * (1 - magnification_x)
+        r2sq = x_rescaling ** 2 * ((magnification_x - 1) / magnification_x)
+        fsq = (fft_scale ** 2 / magnification_x)
 
         Q1 = wavenumber / 2 / propagation_distance * r1sq
         Q2 = numpy.exp(-1.0j * numpy.pi * wavelength * propagation_distance * fsq)
@@ -66,7 +65,7 @@ class FresnelZoomScaling1D(Propagator1D):
         wavefront.add_phase_shift(Q1)
 
         fft = numpy.fft.fft(wavefront.get_complex_amplitude())
-        ifft = numpy.fft.ifft(fft * Q2) * Q3 / numpy.sqrt(m)
+        ifft = numpy.fft.ifft(fft * Q2) * Q3 / numpy.sqrt(magnification_x)
         #
         #
         #
@@ -85,11 +84,6 @@ class FresnelZoomScaling1D(Propagator1D):
                         x_rescaling*magnification,
                         ifft/numpy.sqrt(magnification)*numpy.exp(1j*PHASE),
                         wavelength=wavelength)
-
-        #
-        # wf_propagated = GenericWavefront1D.initialize_wavefront_from_arrays(x_rescaling,
-        #                                                                     ifft,
-        #                                                                     wavelength=wavelength)
 
         return wf_propagated
 

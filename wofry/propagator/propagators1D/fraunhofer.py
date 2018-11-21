@@ -2,7 +2,7 @@
 import numpy
 
 from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
-from wofry.propagator.propagator import Propagator1D, PropagationParameters, PropagationElements
+from wofry.propagator.propagator import Propagator1D
 
 class Fraunhofer1D(Propagator1D):
 
@@ -11,11 +11,11 @@ class Fraunhofer1D(Propagator1D):
     def get_handler_name(self):
         return self.HANDLER_NAME
 
-    def do_specific_progation_after(self, wavefront, propagation_distance, parameters=None, element_index=None):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters=None, element_index=None)
+    def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=None)
 
-    def do_specific_progation_before(self, wavefront, propagation_distance, parameters=None, element_index=None):
-        return self.do_specific_progation( wavefront, propagation_distance, parameters=None, element_index=None)
+    def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
+        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
 
     """
     1D Fraunhofer propagator using convolution via Fourier transform
@@ -26,7 +26,14 @@ class Fraunhofer1D(Propagator1D):
     """
 
     # TODO: check resulting amplitude normalization
-    def do_specific_progation(self, wavefront, propagation_distance, parameters=None, element_index=None):
+    def do_specific_progation(self, wavefront, propagation_distance, parameters, element_index=None):
+
+        shift_half_pixel = self.get_additional_parameter("shift_half_pixel",False,parameters,element_index=element_index)
+
+        return self.propagate_wavefront(wavefront,propagation_distance,shift_half_pixel=shift_half_pixel)
+
+    @classmethod
+    def propagate_wavefront(cls,wavefront,propagation_distance,shift_half_pixel=False):
 
         shape = wavefront.size()
         delta = wavefront.delta()
@@ -36,11 +43,8 @@ class Fraunhofer1D(Propagator1D):
         fft_scale = numpy.fft.fftshift(fft_scale)
         x2 = fft_scale * propagation_distance * wavelength
 
-        try:
-            if parameters.get_additional_parameter("shift_half_pixel"):
-                x2 = x2 - 0.5 * numpy.abs(x2[1] - x2[0])
-        except:
-            pass
+        if shift_half_pixel:
+            x2 = x2 - 0.5 * numpy.abs(x2[1] - x2[0])
 
 
         p1 = numpy.exp(1.0j * wavenumber * propagation_distance)

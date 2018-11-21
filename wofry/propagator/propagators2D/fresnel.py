@@ -21,9 +21,6 @@
 
 
 import numpy
-import scipy.constants as codata
-
-angstroms_to_eV = codata.h*codata.c/codata.e*1e10
 
 from wofry.propagator.wavefront2D.generic_wavefront import GenericWavefront2D
 from wofry.propagator.propagator import Propagator2D
@@ -50,13 +47,13 @@ class Fresnel2D(Propagator2D):
     """
 
     def do_specific_progation(self, wavefront, propagation_distance, parameters, element_index=None):
-        if not parameters.has_additional_parameter("shift_half_pixel"):
-            shift_half_pixel = True
-        else:
-            shift_half_pixel = parameters.get_additional_parameter("shift_half_pixel")
 
-        shift_half_pixel = parameters.get_additional_parameter("shift_half_pixel")
+        shift_half_pixel = self.get_additional_parameter("shift_half_pixel",False,parameters,element_index=element_index)
 
+        return self.propagate_wavefront(wavefront,propagation_distance,shift_half_pixel=shift_half_pixel)
+
+    @classmethod
+    def propagate_wavefront(cls,wavefront,propagation_distance,shift_half_pixel=False):
         wavelength = wavefront.get_wavelength()
 
         #

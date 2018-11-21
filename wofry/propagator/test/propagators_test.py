@@ -6,7 +6,6 @@ import numpy
 # Note that the tests for the Fraunhofer phase do not make any assert, because a good matching has not yet been found.
 #
 
-SRWLIB_AVAILABLE = False
 
 from syned.beamline.shape import Rectangle, Ellipse
 from syned.beamline.element_coordinates import ElementCoordinates
@@ -42,18 +41,9 @@ from wofry.propagator.propagators1D.fresnel_convolution import FresnelConvolutio
 from wofry.propagator.propagators1D.integral import Integral1D
 from wofry.propagator.propagators1D import initialize_default_propagator_1D
 
-# try:
-#     from wofry.propagator.test.propagators.srw_fresnel import FresnelSRW
-# except:
-#     print("FresnelSRW is not available")
 
 propagator = PropagationManager.Instance()
 initialize_default_propagator_2D()
-
-try:
-    propagator.add_propagator(FresnelSRW())
-except:
-    print("FresnelSRW cannot be added")
 
 initialize_default_propagator_1D()
 
@@ -465,12 +455,14 @@ class propagator2DTest(unittest.TestCase):
     # Common interface for all methods using fresnel, via convolution in FT space
     #          three methods available: 'fft': fft -> multiply by kernel in freq -> ifft
     #                                   'convolution': scipy.signal.fftconvolve(wave,kernel in space)
-    #                                   'srw': use the SRW package
+
 
     def propagate_2D_fresnel(self,do_plot=do_plot,method='fft',
                                 wavelength=1.24e-10,aperture_type='square',aperture_diameter=40e-6,
                                 pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                propagation_distance = 30.0,show=1):
+                                propagation_distance = 30.0,show=1,
+                                use_additional_parameters_input_way=1, # 0=default (common), 1=new (specific))
+                             ):
 
 
         method_label = "fresnel (%s)"%method
@@ -504,34 +496,69 @@ class propagator2DTest(unittest.TestCase):
         else:
             raise Exception("Not implemented! (accepted: circle, square, gaussian)")
 
-        propagation_elements.add_beamline_element(BeamlineElement(optical_element=slit,
-                                                                  coordinates=ElementCoordinates(p=0, q=propagation_distance)))
+
+        if use_additional_parameters_input_way == 0:
+            propagation_elements.add_beamline_element(BeamlineElement(optical_element=slit,
+                                                                      coordinates=ElementCoordinates(p=0, q=propagation_distance)))
 
 
-        propagator = PropagationManager.Instance()
-        propagation_parameters = PropagationParameters(wavefront=wf,
-                                                       propagation_elements=propagation_elements)
+            propagator = PropagationManager.Instance()
+            propagation_parameters = PropagationParameters(wavefront=wf,
+                                                           propagation_elements=propagation_elements)
 
-        if method == 'fft':
-            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
-            wf1 = propagator.do_propagation(propagation_parameters, Fresnel2D.HANDLER_NAME)
-        elif method == 'convolution':
-            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
-            wf1 = propagator.do_propagation(propagation_parameters, FresnelConvolution2D.HANDLER_NAME)
-        elif method == 'integral':
-            propagation_parameters.set_additional_parameters("shuffle_interval", 0)
-            propagation_parameters.set_additional_parameters("calculate_grid_only", 1)
-            wf1 = propagator.do_propagation(propagation_parameters, Integral2D.HANDLER_NAME)
-        elif method == 'srw':
-            propagation_parameters.set_additional_parameters("srw_autosetting", 0)
-            wf1 = propagator.do_propagation(propagation_parameters, FresnelSRW.HANDLER_NAME)
-        elif method == 'zoom':
-            propagation_parameters.set_additional_parameters("shift_half_pixel", True)
-            propagation_parameters.set_additional_parameters("magnification_x", 2.0)
-            propagation_parameters.set_additional_parameters("magnification_y", 0.5)
-            wf1 = propagator.do_propagation(propagation_parameters, FresnelZoomXY2D.HANDLER_NAME)
+            if method == 'fft':
+                propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+                wf1 = propagator.do_propagation(propagation_parameters, Fresnel2D.HANDLER_NAME)
+            elif method == 'convolution':
+                propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+                wf1 = propagator.do_propagation(propagation_parameters, FresnelConvolution2D.HANDLER_NAME)
+            elif method == 'integral':
+                propagation_parameters.set_additional_parameters("shuffle_interval", 0)
+                propagation_parameters.set_additional_parameters("calculate_grid_only", 1)
+                wf1 = propagator.do_propagation(propagation_parameters, Integral2D.HANDLER_NAME)
+            elif method == 'zoom':
+                propagation_parameters.set_additional_parameters("shift_half_pixel", True)
+                propagation_parameters.set_additional_parameters("magnification_x", 2.0)
+                propagation_parameters.set_additional_parameters("magnification_y", 0.5)
+                wf1 = propagator.do_propagation(propagation_parameters, FresnelZoomXY2D.HANDLER_NAME)
+            else:
+                raise Exception("Not implemented method: %s"%method)
         else:
-            raise Exception("Not implemented method: %s"%method)
+
+            if method == 'fft':
+                additional_parameters = {"shift_half_pixel":True}
+            elif method == 'convolution':
+                additional_parameters = {"shift_half_pixel":True}
+            elif method == 'integral':
+                additional_parameters = {"shuffle_interval":0,
+                                         "calculate_grid_only":1}
+            elif method == 'zoom':
+                additional_parameters = {"shift_half_pixel":True,
+                                         "magnification_x":2.0,
+                                         "magnification_y":0.5}
+            else:
+                raise Exception("Not implemented method: %s"%method)
+
+
+            propagation_elements.add_beamline_element(
+                        BeamlineElement(optical_element=slit,coordinates=ElementCoordinates(p=0, q=propagation_distance)),
+                        element_parameters=additional_parameters)
+
+
+            propagator = PropagationManager.Instance()
+            propagation_parameters = PropagationParameters(wavefront=wf,
+                                                           propagation_elements=propagation_elements)
+
+            if method == 'fft':
+                wf1 = propagator.do_propagation(propagation_parameters, Fresnel2D.HANDLER_NAME)
+            elif method == 'convolution':
+                wf1 = propagator.do_propagation(propagation_parameters, FresnelConvolution2D.HANDLER_NAME)
+            elif method == 'integral':
+                wf1 = propagator.do_propagation(propagation_parameters, Integral2D.HANDLER_NAME)
+            elif method == 'zoom':
+                wf1 = propagator.do_propagation(propagation_parameters, FresnelZoomXY2D.HANDLER_NAME)
+            else:
+                raise Exception("Not implemented method: %s"%method)
 
 
         if do_plot:
@@ -877,26 +904,11 @@ class propagator2DTest(unittest.TestCase):
 
 
     # @unittest.skip("classing skipping")
-    def test_propagate_2D_fresnel_srw_square(self):
-
-        if not SRWLIB_AVAILABLE:
-            print("SRW not available, skipping test_propagate_2D_fresnel_srw_square")
-            return
-
-        xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='srw',aperture_type='square',
-                                aperture_diameter=40e-6,
-                                #pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=int(1024/2),npixels_y=int(1024/4),
-                                propagation_distance=30.0,wavelength=1.24e-10)
-
-        numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
-
-    # @unittest.skip("classing skipping")
     def test_propagate_2D_fresnel_square(self):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='fft',aperture_type='square',
                                 aperture_diameter=40e-6,
                                 pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                propagation_distance=30.0,wavelength=1.24e-10)
+                                propagation_distance=30.0,wavelength=1.24e-10,use_additional_parameters_input_way=0)
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
@@ -905,7 +917,7 @@ class propagator2DTest(unittest.TestCase):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='convolution',aperture_type='square',
                                 aperture_diameter=40e-6,
                                 pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                propagation_distance=30.0,wavelength=1.24e-10)
+                                propagation_distance=30.0,wavelength=1.24e-10,use_additional_parameters_input_way=0)
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
@@ -914,7 +926,7 @@ class propagator2DTest(unittest.TestCase):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='integral',aperture_type='square',
                                 aperture_diameter=40e-6,
                                 pixelsize_x=1e-6*2,pixelsize_y=1e-6*4,npixels_x=int(1024/2),npixels_y=int(1024/4),
-                                propagation_distance=30.0,wavelength=1.24e-10)
+                                propagation_distance=30.0,wavelength=1.24e-10,use_additional_parameters_input_way=0)
 
         numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
@@ -923,7 +935,16 @@ class propagator2DTest(unittest.TestCase):
         xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='zoom',aperture_type='square',
                                 aperture_diameter=40e-6,
                                 pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
-                                propagation_distance=30.0,wavelength=1.24e-10)
+                                propagation_distance=30.0,wavelength=1.24e-10,use_additional_parameters_input_way=0)
+
+        numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
+
+        xcalc, ycalc, xtheory, ytheory = self.propagate_2D_fresnel(do_plot=do_plot,method='zoom',aperture_type='square',
+                                aperture_diameter=40e-6,
+                                pixelsize_x=1e-6,pixelsize_y=1e-6,npixels_x=1024,npixels_y=1024,
+                                propagation_distance=30.0,wavelength=1.24e-10,use_additional_parameters_input_way=1)
+
+        numpy.testing.assert_almost_equal(ycalc/10,ytheory/10,1)
 
     # @unittest.skip("classing skipping")
     def test_lens(self):
