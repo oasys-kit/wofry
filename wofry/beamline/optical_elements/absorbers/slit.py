@@ -10,7 +10,7 @@ class WOSlit(Slit, OpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront, parameters=None):
+    def applyOpticalElement(self, wavefront, parameters=None, element_index=None):
         boundaries = self._boundary_shape.get_boundaries()
 
         if isinstance(self._boundary_shape, Rectangle):
@@ -60,7 +60,7 @@ class WOGaussianSlit(Slit, OpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront, parameters=None):
+    def applyOpticalElement(self, wavefront, parameters=None, element_index=None):
         boundaries = self._boundary_shape.get_boundaries()
         aperture_diameter_x =  numpy.abs(boundaries[1] - boundaries[0])
         aperture_diameter_y =  numpy.abs(boundaries[2] - boundaries[3])
@@ -76,7 +76,7 @@ class WOSlit1D(Slit, OpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront, parameters=None):
+    def applyOpticalElement(self, wavefront, parameters=None, element_index=None):
         boundaries = self._boundary_shape.get_boundaries()
 
         if isinstance(self._boundary_shape, Rectangle):
@@ -90,7 +90,7 @@ class WOGaussianSlit1D(Slit, OpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
 
-    def applyOpticalElement(self, wavefront, parameters=None):
+    def applyOpticalElement(self, wavefront, parameters=None, element_index=None):
         boundaries = self._boundary_shape.get_boundaries()
         aperture_diameter =  numpy.abs(boundaries[1] - boundaries[0])
         X = wavefront.get_abscissas()
