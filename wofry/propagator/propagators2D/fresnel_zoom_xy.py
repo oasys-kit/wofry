@@ -34,10 +34,10 @@ class FresnelZoomXY2D(Propagator2D):
         return self.HANDLER_NAME
 
     def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=None)
+        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=element_index)
 
     def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
-        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
+        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=element_index)
 
 
     """
@@ -53,7 +53,7 @@ class FresnelZoomXY2D(Propagator2D):
         shift_half_pixel = self.get_additional_parameter("shift_half_pixel",False,parameters,element_index=element_index)
         m_x = self.get_additional_parameter("magnification_x",1.0,parameters,element_index=element_index)
         m_y = self.get_additional_parameter("magnification_y",1.0,parameters,element_index=element_index)
-
+        print(">>>>>m_x,m_y",element_index,m_x,m_y)
         return self.propagate_wavefront(wavefront1,propagation_distance, magnification_x=m_x, magnification_y=m_y,shift_half_pixel=shift_half_pixel)
 
 

@@ -26,10 +26,10 @@ class Fraunhofer2D(Propagator2D):
     """
 
     def do_specific_progation_after(self, wavefront, propagation_distance, parameters, element_index=None):
-        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=None)
+        return self.do_specific_progation(wavefront, propagation_distance, parameters, element_index=element_index)
 
     def do_specific_progation_before(self, wavefront, propagation_distance, parameters, element_index=None):
-        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=None)
+        return self.do_specific_progation( wavefront, propagation_distance, parameters, element_index=element_index)
 
 
     def do_specific_progation(self, wavefront, propagation_distance, parameters, element_index=None):
