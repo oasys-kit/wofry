@@ -32,44 +32,79 @@ from wofry.propagator.propagators1D.fresnel_convolution import FresnelConvolutio
 from wofry.propagator.propagators1D.integral import Integral1D
 from wofry.propagator.propagators1D import initialize_default_propagator_1D
 
+from scipy.special import fresnel
+
+
 
 propagator = PropagationManager.Instance()
 initialize_default_propagator_1D()
 
-#
-# some common tools
-#
-def get_theoretical_diffraction_pattern(angle_x,
-                                        aperture_type='square',aperture_diameter=40e-6,
-                                        wavelength=1.24e-10,normalization=True):
 
-    # a quick and dirty trick to avoid 0/0
-    indices_bad = numpy.where(angle_x == 0)
-    angle_x[indices_bad] += 1e-15
+def fraunhofer_analytical_rectangle(
+    fresnel_number=None,propagation_distance=1.140,
+    aperture_half=1e-3,wavelength=639e-9,
+    detector_array=None,npoints=1000,
+    ):
 
-    # get the theoretical value
-    if aperture_type == 'circle': #circular, also display analytical values
-        from scipy.special import jv
-        x = (2*numpy.pi/wavelength) * (aperture_diameter/2) * angle_x
-        amplitude_theory = 2*jv(1,x)/x
-        intensity_theory = amplitude_theory**2
-    elif aperture_type == 'square':
 
-        x = (2*numpy.pi / wavelength) * (aperture_diameter / 2) * angle_x
-        amplitude_theory = 2 * numpy.sin(x)  / x
-        intensity_theory = amplitude_theory**2
-    elif aperture_type == 'gaussian':
-        sigma = aperture_diameter/2.35
-        sigma_ft = 1.0 / sigma * wavelength / (2.0 * numpy.pi)
-        # Factor 2.0 is because we wwant intensity (amplitude**2)
-        intensity_theory = numpy.exp( -2.0*(angle_x**2/sigma_ft**2/2) )
+    if fresnel_number is None:
+        fresnel_number = aperture_half**2 / (wavelength * propagation_distance)
+
+    print("Fresnel number: ",fresnel_number)
+
+
+    if detector_array is None:
+        if fresnel_number > 1.0:
+            window_aperture_ratio = 2.0
+        else:
+            window_aperture_ratio = 1.0 / fresnel_number
+        x = numpy.linspace(-window_aperture_ratio*aperture_half,window_aperture_ratio*aperture_half,npoints)
     else:
-        raise Exception("Undefined aperture type (accepted: circle, square, gaussian)")
+        x = detector_array.copy()
 
-    if normalization:
-        intensity_theory /= intensity_theory.max()
+    argument_sinc = 2.0 * aperture_half * numpy.pi / wavelength / propagation_distance * x # TODO: check the 2??
+    alpha = 2.0 * aperture_half / (wavelength*propagation_distance)**(1.0/2.0) * \
+            numpy.exp(1j*numpy.pi/wavelength/propagation_distance * x**2) * \
+            numpy.sin(argument_sinc) / argument_sinc
 
-    return intensity_theory
+    # TODO note that the global phase (Goldman 4-59) is missing
+
+    return x,alpha
+
+def fresnel_analytical_rectangle(
+    fresnel_number=None,propagation_distance=1.140,
+    aperture_half=1e-3,wavelength=639e-9,
+    detector_array=None,npoints=1000,
+    ):
+
+
+    if fresnel_number is None:
+        fresnel_number = aperture_half**2 / (wavelength * propagation_distance)
+
+    print("Fresnel number: ",fresnel_number)
+
+
+    if detector_array is None:
+        if fresnel_number > 1.0:
+            window_aperture_ratio = 2.0
+        else:
+            window_aperture_ratio = 1.0 / fresnel_number
+        x = numpy.linspace(-window_aperture_ratio*aperture_half,window_aperture_ratio*aperture_half,npoints)
+    else:
+        x = detector_array.copy()
+
+    s_plus  = numpy.sqrt(2.0 * fresnel_number) * ( 1.0 + x / aperture_half)
+    s_minus = numpy.sqrt(2.0 * fresnel_number) * ( 1.0 - x / aperture_half)
+
+    fs_plus,fc_plus = fresnel(s_plus)
+    fs_minus,fc_minus = fresnel(s_minus)
+
+    Ix = (fc_minus + fc_plus) + 1j*(fs_minus + fs_plus)
+    Ix *= 1.0/numpy.sqrt(2.0)
+
+    # TODO note that the global phase (Goldman 4-59) is missing
+
+    return x,Ix  # note that wavefield is being returned, not intensity!
 
 
 class propagatorTest(unittest.TestCase):
@@ -82,10 +117,17 @@ class propagatorTest(unittest.TestCase):
     #                                   'zoom': fft -> multiply by kernel in freq -> ifft
     # valid apertute_type: square, gaussian
 
-    def propagate_1D(self,do_plot=do_plot,method='fft',
-                                wavelength=1.24e-10,aperture_type='square',aperture_diameter=40e-6,
-                                wavefront_length=100e-6,npoints=500,
-                                propagation_distance = 30.0,normalization=True,show=1):
+    def propagate_1D(self,do_plot=do_plot,
+                                method='fft',
+                                wavelength=1.24e-10,
+                                aperture_type='square',
+                                aperture_diameter=40e-6,
+                                wavefront_length=100e-6,
+                                npoints=500,
+                                propagation_distance = 30.0,
+                                normalization=True,  # TODO put False
+                                show=1,
+                                amplitude=(0.0+1.0j)):
 
 
 
@@ -96,7 +138,9 @@ class propagatorTest(unittest.TestCase):
         wf = GenericWavefront1D.initialize_wavefront_from_range(x_min=-wavefront_length/2, x_max=wavefront_length/2,
                                                                 number_of_points=npoints,wavelength=wavelength)
 
-        wf.set_plane_wave_from_complex_amplitude((2.0+1.0j)) # an arbitraty value
+        wf.set_plane_wave_from_complex_amplitude(amplitude) # an arbitraty value
+
+        deltax = wf.get_abscissas()[1] - wf.get_abscissas()[0]
 
         propagation_elements = PropagationElements()
 
@@ -118,6 +162,7 @@ class propagatorTest(unittest.TestCase):
                                                        propagation_elements=propagation_elements)
 
         print("Using propagator method:  ",method)
+        fresnel_analytical = True
         if method == 'fft':
             wf1 = propagator.do_propagation(propagation_parameters, Fresnel1D.HANDLER_NAME)
         elif method == 'convolution':
@@ -127,6 +172,7 @@ class propagatorTest(unittest.TestCase):
             propagation_parameters.set_additional_parameters("magnification_N", 2.0)
             wf1 = propagator.do_propagation(propagation_parameters, Integral1D.HANDLER_NAME)
         elif method == 'fraunhofer':
+            fresnel_analytical = False
             # propagation_parameters.set_additional_parameters("shift_half_pixel", 0)
             wf1 = propagator.do_propagation(propagation_parameters, Fraunhofer1D.HANDLER_NAME)
         elif method == 'zoom':
@@ -135,28 +181,47 @@ class propagatorTest(unittest.TestCase):
         else:
             raise Exception("Not implemented method: %s"%method)
 
-        # get the theoretical value
-        angle_x = wf1.get_abscissas() / propagation_distance
 
-        intensity_theory = get_theoretical_diffraction_pattern(angle_x,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
-                                            wavelength=wavelength,normalization=normalization)
+        if fresnel_analytical:
+            xx, alpha = fresnel_analytical_rectangle(
+                fresnel_number = None, propagation_distance = propagation_distance,
+                aperture_half = 0.5*aperture_diameter, wavelength = wavelength,
+                detector_array = wf1.get_abscissas(), npoints = None)
+        else:
+            xx, alpha = fraunhofer_analytical_rectangle(
+                fresnel_number = None, propagation_distance = propagation_distance,
+                aperture_half = 0.5*aperture_diameter, wavelength = wavelength,
+                detector_array = wf1.get_abscissas(), npoints = None)
+
+        angle_x = xx / propagation_distance
+        intensity_theory = numpy.abs(amplitude*alpha)**2
 
         intensity_calculated =  wf1.get_intensity()
 
         if normalization:
             intensity_calculated /= intensity_calculated.max()
+            intensity_theory /= intensity_theory.max()
 
         if do_plot:
             from srxraylib.plot.gol import plot
             plot(wf1.get_abscissas()*1e6/propagation_distance,intensity_calculated,
                  angle_x*1e6,intensity_theory,
-                 legend=["%s "%method,"Theoretical (far field)"],
+                 legend=["%s "%method,"analytical"],
                  legend_position=(0.95, 0.95),
-                 title="1D (%s) diffraction from a %s aperture of %3.1f um at wavelength of %3.1f A"%
+                 title="1D (%s) diffraction from a %s aperture of %3.1f um at \n wavelength of %3.1f A"%
                        (method,aperture_type,aperture_diameter*1e6,wavelength*1e10),
-                 xtitle="X (urad)", ytitle="Intensity",xrange=[-20,20],
+                 xtitle="X (urad)", ytitle="Intensity",
+                 xrange=[-20,20],ylog=True,
                  show=show)
 
+            plot(wf1.get_abscissas()*1e6,wf1.get_phase(unwrap=True),
+                 1e6 * xx, numpy.unwrap(numpy.angle(alpha)),
+                 legend=["%s " % method, "analytical"],
+                 title="1D (%s) diffraction from a %s aperture of %3.1f um at \n wavelength of %3.1f A NOT ASSERTED!!"%
+                       (method, aperture_type, aperture_diameter * 1e6, wavelength * 1e10),
+                 xtitle="X (urad)", ytitle="Phase",
+                 # xrange=[-20, 20],
+                 )
 
         return wf1.get_abscissas()/propagation_distance,intensity_calculated,intensity_theory
 
@@ -186,6 +251,7 @@ class propagatorTest(unittest.TestCase):
                                 wavefront_length=wavefront_length,npoints=npoints,
                                 propagation_distance = 1.0, show=1)
 
+        # works for normalized only
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
     # @unittest.skip("classing skipping")
@@ -284,7 +350,8 @@ class propagatorTest(unittest.TestCase):
         angle, intensity_calculated,intensity_theory = self.propagate_1D(do_plot=do_plot,method="fft",
                                 wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
                                 wavefront_length=wavefront_length,npoints=npoints,
-                                propagation_distance = propagation_distance, show=1)
+                                propagation_distance = propagation_distance,
+                                show=1)
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
@@ -307,7 +374,8 @@ class propagatorTest(unittest.TestCase):
         angle, intensity_calculated,intensity_theory = self.propagate_1D(do_plot=do_plot,method="zoom",
                                 wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
                                 wavefront_length=wavefront_length,npoints=npoints,
-                                propagation_distance = propagation_distance, show=1)
+                                propagation_distance = propagation_distance,
+                                show=1)
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
@@ -330,7 +398,8 @@ class propagatorTest(unittest.TestCase):
         angle, intensity_calculated,intensity_theory = self.propagate_1D(do_plot=do_plot,method="convolution",
                                 wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
                                 wavefront_length=wavefront_length,npoints=npoints,
-                                propagation_distance = propagation_distance, show=1)
+                                propagation_distance = propagation_distance,
+                                show=1)
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
@@ -354,7 +423,8 @@ class propagatorTest(unittest.TestCase):
         angle, intensity_calculated,intensity_theory = self.propagate_1D(do_plot=do_plot,method="integral",
                                 wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
                                 wavefront_length=wavefront_length,npoints=npoints,
-                                propagation_distance = propagation_distance, show=1)
+                                propagation_distance = propagation_distance,
+                                show=1)
 
         numpy.testing.assert_almost_equal(intensity_calculated,intensity_theory,1)
 
@@ -373,7 +443,7 @@ class propagatorTest(unittest.TestCase):
         aperture_diameter = 100e-6
         wavefront_length = 1000e-6
         wavelength = 1.5e-10
-        propagation_distance = 5.0
+        propagation_distance = 55.0
         npoints=2048
 
 
@@ -390,29 +460,37 @@ class propagatorTest(unittest.TestCase):
 
 
         # compare with this one, the reference
-        angle_fft, intensity_calculated_fft,intensity_theory = self.propagate_1D(do_plot=False,method="fft",
-                                wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
-                                wavefront_length=wavefront_length,npoints=npoints,
-                                propagation_distance = propagation_distance, normalization=False, show=False)
+        # angle_fft, intensity_calculated_fft,intensity_theory = self.propagate_1D(do_plot=False,method="fft",
+        #                         wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
+        #                         wavefront_length=wavefront_length,npoints=npoints,
+        #                         propagation_distance = propagation_distance,
+        #                         show=False)
 
 
-        for method in ["zoom","convolution","integral","fraunhofer"]:
+        for method in ["fft","zoom","convolution","integral","fraunhofer"]:
 
-            angle_1, intensity_calculated_1,intensity_theory = self.propagate_1D(do_plot=False,method=method,
-                                    wavelength=wavelength,aperture_type=aperture_type,aperture_diameter=aperture_diameter,
+            angle_1, intensity_calculated_1,intensity_theory = self.propagate_1D(
+                                    do_plot=do_plot,
+                                    method=method,
+                                    wavelength=wavelength,aperture_type=aperture_type,
+                                    aperture_diameter=aperture_diameter,
                                     wavefront_length=wavefront_length,npoints=npoints,
-                                    propagation_distance = propagation_distance, normalization=False, show=False)
+                                    propagation_distance = propagation_distance,
+                                    show=False)
 
 
-            x_fft = angle_fft * propagation_distance
-            x_1 = angle_1 * propagation_distance
-
-            ymax_all = [intensity_calculated_fft.max(),intensity_calculated_1.max()]
-            ymax = numpy.max(ymax_all)
-            print(">>>",ymax_all,numpy.sqrt(intensity_calculated_fft.max()/intensity_calculated_1.max()))
-            if do_plot:
-                plot(x_fft,intensity_calculated_fft,x_1,intensity_calculated_1,
-                     legend=["fft",method],yrange=[0,ymax],title="Comparing intensities - Not yet a test!",show=True)
+            # x_fft = angle_fft * propagation_distance
+            # x_1 = angle_1 * propagation_distance
+            #
+            # ymax_all = [intensity_calculated_fft.max(),intensity_calculated_1.max()]
+            # ymax = numpy.max(ymax_all)
+            # print(">>>",ymax_all,numpy.sqrt(intensity_calculated_fft.max()/intensity_calculated_1.max()))
+            # if do_plot:
+            #     plot(x_fft,intensity_calculated_fft,x_1,intensity_calculated_1,
+            #          legend=["fft",method],yrange=[0,ymax],
+            #          title="Comparing intensities - Not yet a test!",
+            #          ylog=True,
+            #          show=True)
 
             # numpy.testing.assert_almost_equal(intensity_calculated_fft,intensity_calculated_1,1)
 

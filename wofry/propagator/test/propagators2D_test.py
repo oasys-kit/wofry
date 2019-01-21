@@ -35,11 +35,46 @@ from wofry.propagator.propagators2D.fresnel_zoom_xy import FresnelZoomXY2D
 #
 # some common tools
 #
-from propagators1D_test import get_theoretical_diffraction_pattern
+# from propagators1D_test import get_theoretical_diffraction_pattern
 
 
 propagator = PropagationManager.Instance()
 initialize_default_propagator_2D()
+
+
+#TODO replace by the pne used in 1D
+def get_theoretical_diffraction_pattern(angle_x,
+                                        aperture_type='square',aperture_diameter=40e-6,
+                                        wavelength=1.24e-10,normalization=False):
+
+    # a quick and dirty trick to avoid 0/0
+    indices_bad = numpy.where(angle_x == 0)
+    angle_x[indices_bad] += 1e-15
+
+    # get the theoretical value
+    if aperture_type == 'circle': #circular, also display analytical values
+        from scipy.special import jv
+        x = (2*numpy.pi/wavelength) * (aperture_diameter/2) * angle_x
+        amplitude_theory = 2*jv(1,x)/x
+        intensity_theory = amplitude_theory**2
+    elif aperture_type == 'square':
+
+        x = (2*numpy.pi / wavelength) * (aperture_diameter / 2) * angle_x
+        amplitude_theory = 2 * numpy.sin(x)  / x
+        intensity_theory = amplitude_theory**2
+    elif aperture_type == 'gaussian':
+        sigma = aperture_diameter/2.35
+        sigma_ft = 1.0 / sigma * wavelength / (2.0 * numpy.pi)
+        # Factor 2.0 is because we wwant intensity (amplitude**2)
+        intensity_theory = numpy.exp( -2.0*(angle_x**2/sigma_ft**2/2) )
+    else:
+        raise Exception("Undefined aperture type (accepted: circle, square, gaussian)")
+
+    if normalization:
+        intensity_theory /= intensity_theory.max()
+
+    return intensity_theory
+
 
 def line_image(image,horizontal_or_vertical='H'):
     if horizontal_or_vertical == "H":

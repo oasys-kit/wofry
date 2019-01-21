@@ -63,3 +63,67 @@ class Fraunhofer1D(Propagator1D):
                                                     wavefront_out.get_intensity().sum()))
 
         return wavefront_out
+
+    #todo not yet working...
+    @classmethod
+    def propagate_wavefront_new(cls,wavefront,
+                            propagation_distance,
+                            fraunhofer_kernel=True, # set to False for far field propagator
+                            shift_half_pixel=None, # not more used, kept for version compatibility
+                            ):
+        #
+        # check validity
+        #
+        x = wavefront.get_abscissas()
+
+        #
+        # compute Fourier transform
+        #
+
+        # frequency for axis 1
+        npixels = wavefront.size()
+        pixelsize = wavefront.delta()
+        wavenumber = wavefront.get_wavenumber()
+        wavelength = wavefront.get_wavelength()
+
+        freq_nyquist = 0.5 / pixelsize
+        if numpy.mod(npixels, 2) == 0:
+            freq_n = numpy.arange(-npixels // 2, npixels // 2, 1) / (npixels // 2)
+        else:
+            freq_n = numpy.arange(-(npixels - 1) // 2, (npixels + 1) // 2, 1) / ((npixels - 1) // 2)
+
+        freq_x = freq_n * freq_nyquist
+
+
+        x2 = freq_x * propagation_distance * wavelength
+
+        P1 = numpy.exp(1.0j * wavenumber * propagation_distance)
+
+        # fsq = freq_x ** 2
+        # P2 = numpy.exp(-1.0j * wavenumber / 2 / propagation_distance * fsq)
+
+        P2 = numpy.exp(1.0j * wavenumber / 2 / propagation_distance * x**2)
+        P3 = 1.0j * wavelength * propagation_distance
+
+        if fraunhofer_kernel:
+            exponential = 1.0 + 0j
+        else:
+            exponential = numpy.exp(1j * wavenumber / 2 / propagation_distance * x ** 2)
+
+        F1 = numpy.fft.fft(exponential * wavefront.get_complex_amplitude())  # Take the fourier transform of the image.
+        #  Now shift the quadrants around so that low spatial frequencies are in
+        # the center of the 2D fourier transformed image.
+        F1 *= P1
+        F1 *= P2
+        F1 /= numpy.sqrt(P3)  # this is 1D -> no sqrt for 2D
+        F2 = numpy.fft.fftshift(F1)
+
+        wavefront_out = GenericWavefront1D.initialize_wavefront_from_arrays(x_array=x2,
+                                                                            y_array=F2,
+                                                                            wavelength=wavelength)
+
+        # added srio@esrf.eu 2018-03-23 to conserve energy - TODO: review method!
+        # wavefront_out.rescale_amplitude(numpy.sqrt(wavefront.get_intensity().sum() /
+        #                                            wavefront_out.get_intensity().sum()))
+
+        return wavefront_out
