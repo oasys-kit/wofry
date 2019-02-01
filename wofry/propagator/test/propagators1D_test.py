@@ -99,12 +99,12 @@ def fresnel_analytical_rectangle(
     fs_plus,fc_plus = fresnel(s_plus)
     fs_minus,fc_minus = fresnel(s_minus)
 
-    Ix = (fc_minus + fc_plus) + 1j*(fs_minus + fs_plus)
-    Ix *= 1.0/numpy.sqrt(2.0)
+    Ux = (fc_minus + fc_plus) + 1j*(fs_minus + fs_plus)
+    Ux *= 1.0/numpy.sqrt(2.0)
 
     # TODO note that the global phase (Goldman 4-59) is missing
 
-    return x,Ix  # note that wavefield is being returned, not intensity!
+    return x,Ux  # note that wavefield is being returned, not intensity!
 
 
 class propagatorTest(unittest.TestCase):

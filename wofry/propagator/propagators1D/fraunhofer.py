@@ -75,6 +75,7 @@ class Fraunhofer1D(Propagator1D):
         # check validity
         #
         x = wavefront.get_abscissas()
+        deltax = wavefront.delta()
 
         #
         # compute Fourier transform
@@ -117,6 +118,7 @@ class Fraunhofer1D(Propagator1D):
         F1 *= P2
         F1 /= numpy.sqrt(P3)  # this is 1D -> no sqrt for 2D
         F2 = numpy.fft.fftshift(F1)
+        F2 *= deltax  # why??
 
         wavefront_out = GenericWavefront1D.initialize_wavefront_from_arrays(x_array=x2,
                                                                             y_array=F2,
