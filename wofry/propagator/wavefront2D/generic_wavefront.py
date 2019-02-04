@@ -493,14 +493,16 @@ class GenericWavefront2D(Wavefront):
         # if polarized, set arbitrary PI component to zero
         self.set_pi_complex_amplitude_to_zero()
 
-    def set_gaussian_hermite_mode(self, sigma_x, sigma_y, nx, ny, amplitude=1.0, center_x=0.0, center_y=0.0):
+    def set_gaussian_hermite_mode(self, sigma_x, sigma_y, nx, ny, amplitude=1.0, center_x=0.0, center_y=0.0,
+                                  betax=100.0,betay=100):
         x = self.get_coordinate_x()
         y = self.get_coordinate_y()
 
-        a2D = GaussianSchellModel2D(amplitude, sigma_x, 100.0*sigma_x, sigma_y, 100.0*sigma_y)
+        a2D = GaussianSchellModel2D(amplitude, sigma_x, betax*sigma_x, sigma_y, betay*sigma_y)
         Phi = a2D.phi_nm(nx, ny, x-center_x, y-center_y) + 0j
+        eigenvalue = a2D.beta(nx,ny)
 
-        self.set_complex_amplitude(Phi)
+        self.set_complex_amplitude(numpy.sqrt(eigenvalue)*Phi)
         # if polarized, set arbitrary PI component to zero
         self.set_pi_complex_amplitude_to_zero()
 

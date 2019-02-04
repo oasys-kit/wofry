@@ -313,12 +313,13 @@ class GenericWavefront1D(Wavefront):
         # if polarized, set arbitrary PI component to zero
         self.set_pi_complex_amplitude_to_zero()
 
-    def set_gaussian_hermite_mode(self, sigma_x, mode_x, amplitude=1.0, shift=0.0):
-        a1D = GaussianSchellModel1D(amplitude, sigma_x, 100.0*sigma_x)
+    def set_gaussian_hermite_mode(self, sigma_x, mode_x, amplitude=1.0, shift=0.0, beta=100.0):
+        a1D = GaussianSchellModel1D(amplitude, sigma_x, beta*sigma_x)
 
         real_amplitude = a1D.phi(mode_x, self.get_abscissas() - shift)
+        eigenvalue = a1D.beta(mode_x)
 
-        self.set_complex_amplitude(real_amplitude+0.0j)
+        self.set_complex_amplitude(numpy.sqrt(eigenvalue)*real_amplitude+0.0j)
         # if polarized, set arbitrary PI component to zero
         self.set_pi_complex_amplitude_to_zero()
 
