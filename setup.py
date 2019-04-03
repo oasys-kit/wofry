@@ -50,7 +50,8 @@ CLASSIFIERS = (
 
 INSTALL_REQUIRES = (
     'syned>=1.0.12',
-    'h5py'
+    'h5py',
+    'srxraylib'
 )
 
 SETUP_REQUIRES = (
