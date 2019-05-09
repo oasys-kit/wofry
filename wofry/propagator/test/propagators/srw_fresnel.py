@@ -1,10 +1,10 @@
 # TODO: REMOVE THIS!!!!
 try:
-    from srwlib import *
+    from oasys_srw.srwlib import *
     SRWLIB_AVAILABLE = True
 except:
     try:
-        from wpg.srwlib import *
+        from srwlib import *
         SRWLIB_AVAILABLE = True
     except:
         SRWLIB_AVAILABLE = False
