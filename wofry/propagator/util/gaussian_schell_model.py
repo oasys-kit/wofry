@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.misc as misc
 import scipy.special as special
 
 class GaussianSchellModel1D(object):
@@ -61,16 +60,10 @@ class GaussianSchellModel1D(object):
     def phi(self, n, x):
         c_h_n = special.hermite(n)
         c = self.c()
-
-        #res = np.sqrt(2.0*c)**0.5 * (1/np.pi)**0.25 * (1.0/np.sqrt(2**n * misc.factorial(n) ))
-        #res =  (1.0/np.sqrt(np.sqrt(np.pi) * 2**n * misc.factorial(n) ))**0.5
-        #h_n = np.polyval(c_h_n, x * np.sqrt(2*c))
         h_n = np.polyval(c_h_n, x * np.sqrt(2*c) )
 
-#        h_n *= 2 ** -(n/2.0)
-
         res = ((2*c/np.pi) ** 0.25) * np.exp(-c * x**2)
-        res *= h_n * (1.0/np.sqrt(2**n * misc.factorial(n) ))
+        res *= h_n * (1.0/np.sqrt(2**n * special.factorial(n) ))
 
         return res
 
@@ -112,7 +105,6 @@ class GaussianSchellModel2D(object):
 
         res = phi_x * phi_y
 
-        #print(x, y, phi_x, phi_y, res)
         return res
 
     def phi_nm(self,n_x, n_y, x_coords, y_coords):

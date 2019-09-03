@@ -11,18 +11,18 @@ except AttributeError:
 
 NAME = 'wofry'
 
-VERSION = '1.0.21'
+VERSION = '1.0.22'
 ISRELEASED = True
 
 DESCRIPTION = 'WOFRY (Wave Optics FRamework in pYthon) kernel library'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
 LONG_DESCRIPTION = open(README_FILE).read()
 AUTHOR = 'Manuel Sanchez del Rio, Luca Rebuffi'
-AUTHOR_EMAIL = 'luca.rebuffi@elettra.eu'
-URL = 'https://github.com/lucarebuffi/wofry'
-DOWNLOAD_URL = 'https://github.com/lucarebuffi/wofry'
+AUTHOR_EMAIL = 'lrebuffi@anl.gov'
+URL = 'https://github.com/oasys-kit/wofry'
+DOWNLOAD_URL = 'https://github.com/oasys-kit/wofry'
 MAINTAINER = 'Luca Rebuffi'
-MAINTAINER_EMAIL = 'luca.rebuffi@elettra.eu'
+MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
 LICENSE = 'GPLv3'
 
 KEYWORDS = (
@@ -49,7 +49,7 @@ CLASSIFIERS = (
 )
 
 INSTALL_REQUIRES = (
-    'syned>=1.0.12',
+    'syned>=1.0.13',
     'h5py',
     'srxraylib'
 )
