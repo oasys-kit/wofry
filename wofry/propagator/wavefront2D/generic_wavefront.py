@@ -875,10 +875,15 @@ class GenericWavefront2D(Wavefront):
             mesh_X = f[filepath+"/wfr_mesh_X"].value
             mesh_Y = f[filepath+"/wfr_mesh_Y"].value
             complex_amplitude_s = f[filepath+"/wfr_complex_amplitude_s"].value.T
+            try:
+                complex_amplitude_p = f[filepath + "/wfr_complex_amplitude_p"].value.T
+            except:
+                complex_amplitude_p = None
             wfr = cls.initialize_wavefront_from_arrays(
                                 x_array=numpy.linspace(mesh_X[0],mesh_X[1],mesh_X[2]),
                                 y_array=numpy.linspace(mesh_Y[0],mesh_Y[1],mesh_Y[2]),
-                                z_array=complex_amplitude_s)
+                                z_array=complex_amplitude_s,
+                                z_array_pi=complex_amplitude_p)
             wfr.set_photon_energy(f[filepath+"/wfr_photon_energy"].value)
             f.close()
             return wfr
