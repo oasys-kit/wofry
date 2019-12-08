@@ -10,4 +10,4 @@ WOFRY [1] is the OASYS framework for waveoptics calculations. It contains a thre
 
 [1] https://doi.org/10.1117/12.2274232
 
-[2] https://github.com/oasys-kit/wofry/blob/master/doc/pirro_thesis.pdf
+[2] https://github.com/oasys-kit/documents/blob/master/zoom_propagator_pirro_thesis.pdf
