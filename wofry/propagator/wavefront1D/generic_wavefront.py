@@ -497,7 +497,7 @@ class GenericWavefront1D(Wavefront):
         fdata = f1.create_dataset(_calculation, data=_arr)
         f.close()
 
-    def save_h5_file(self,filename,subgroupname="wfr",intensity=False,phase=False,overwrite=True,verbose=False):
+    def save_h5_file(self,filename,subgroupname="wfr",intensity=True,phase=False,overwrite=True,verbose=False):
         """
         Auxiliary function to write wavefront data into a hdf5 generic file.
         When using the append mode to write h5 files, overwriting does not work and makes the code crash. To avoid this
@@ -505,7 +505,7 @@ class GenericWavefront1D(Wavefront):
         :param self: input / output resulting Wavefront structure (instance of GenericWavefront2D);
         :param filename: path to file for saving the wavefront
         :param subgroupname: container mechanism by which HDF5 files are organised
-        :param intensity: writes intensity for sigma and pi polarisation (default=False)
+        :param intensity: writes intensity for sigma and pi polarisation (default=True)
         :param amplitude:
         :param phase:
         :param overwrite: flag that should always be set to True to avoid infinity loop on the recursive part of the function.
@@ -528,16 +528,12 @@ class GenericWavefront1D(Wavefront):
             # always writes complex amplitude
             x_polarization = self.get_complex_amplitude()       # sigma
             self._dump_arr_2_hdf5(x_polarization, "wfr_complex_amplitude_s", filename, subgroupname)
-            self._dump_arr_2_hdf5(x_polarization, "wfr_complex_amplitude_p", filename, subgroupname)
 
             if self.is_polarized():
                 y_polarization = self.get_complex_amplitude(polarization=Polarization.PI)       # pi
                 self._dump_arr_2_hdf5(y_polarization, "wfr_complex_amplitude_p", filename, subgroupname)
 
-
-
             if intensity:
-
                 if self.is_polarized():
                     self._dump_arr_2_hdf5(self.get_intensity(polarization=Polarization.TOTAL),"intensity/wfr_intensity", filename, subgroupname)
                     self._dump_arr_2_hdf5(self.get_intensity(polarization=Polarization.SIGMA),"intensity/wfr_intensity_s", filename, subgroupname)
@@ -577,11 +573,6 @@ class GenericWavefront1D(Wavefront):
             myflags = [intensity,phase]
             mylabels = ['intensity','phase']
             for i,label in enumerate(mylabels):
-# nxdata = nxentry.create_group('mr_scan')
-# nxdata.attrs['NX_class'] = 'NXdata'
-# nxdata.attrs['signal'] = 'I00'      # Y axis of default plot
-# nxdata.attrs['axes'] = 'mr'         # X axis of default plot
-# nxdata.attrs['mr_indices'] = [0,]   # use "mr" as the first dimension of I00
                 if myflags[i]:
                     f2 = f1[mylabels[i]]
                     f2.attrs['NX_class'] = 'NXdata'
@@ -589,8 +580,6 @@ class GenericWavefront1D(Wavefront):
                     f2.attrs['axes'] = b'axis_x'
 
                     f3 = f2["wfr_%s"%(mylabels[i])]
-                    # f3.attrs['interpretation'] = 'image'
-
 
                     # axis data
                     ds = f2.create_dataset('axis_x', data=1e6*x)
@@ -609,25 +598,31 @@ class GenericWavefront1D(Wavefront):
         if verbose: print("save_h5_file: written/updated %s data in file: %s"%(subgroupname,filename))
 
     @classmethod
-    def load_h5_file(cls,filename,filepath):
+    def load_h5_file(cls,filename,filepath="wfr"):
 
         try:
             f = h5py.File(filename, 'r')
-            mesh = f[filepath+"/wfr_mesh"].value
-
-            complex_amplitude_s = f[filepath+"/wfr_complex_amplitude_s"].value
-            wfr = cls.initialize_wavefront_from_arrays(
-                                numpy.linspace(mesh[0],mesh[1],mesh[2]),
-                                complex_amplitude_s)
-            wfr.set_photon_energy(f[filepath+"/wfr_photon_energy"].value)
+            mesh = f[filepath+"/wfr_mesh"][()]
+            complex_amplitude_s = f[filepath+"/wfr_complex_amplitude_s"][()]
+            energy = f[filepath + "/wfr_photon_energy"][()]
+            try:
+                complex_amplitude_p = f[filepath + "/wfr_complex_amplitude_p"][()]
+            except:
+                complex_amplitude_p = None
             f.close()
-            return wfr
         except:
-            raise Exception("Failed to load 2D wavefront to h5 file: "+filename)
+            raise Exception("Failed to load 2D wavefront from h5 file: "+filename)
+
+        wfr = cls.initialize_wavefront_from_arrays(
+                            numpy.linspace(mesh[0],mesh[1],int(mesh[2])),
+                            complex_amplitude_s,complex_amplitude_p)
+        wfr.set_photon_energy(energy)
+        return wfr
+
 
 if __name__ == "__main__":
-    # w = GenericWavefront1D.initialize_wavefront_from_steps()
-    # w2 = w.duplicate()
-
-
+    # w = GenericWavefront1D.initialize_wavefront_from_steps(polarization=Polarization.TOTAL)
+    # w.save_h5_file("/tmp/wf.h5",subgroupname="wfr",intensity=True,phase=False,overwrite=True,verbose=True)
+    # w2 = GenericWavefront1D.load_h5_file("/tmp/wf.h5",filepath="wfr")
+    # assert(w2.is_identical(w))
     pass
