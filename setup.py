@@ -11,7 +11,7 @@ except AttributeError:
 
 NAME = 'wofry'
 
-VERSION = '1.0.23'
+VERSION = '1.0.24'
 ISRELEASED = True
 
 DESCRIPTION = 'WOFRY (Wave Optics FRamework in pYthon) kernel library'
@@ -49,7 +49,7 @@ CLASSIFIERS = (
 )
 
 INSTALL_REQUIRES = (
-    'syned>=1.0.13',
+    'syned>=1.0.16',
     'h5py',
     'srxraylib'
 )

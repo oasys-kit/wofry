@@ -511,6 +511,13 @@ class GenericWavefront1D(Wavefront):
         :param overwrite: flag that should always be set to True to avoid infinity loop on the recursive part of the function.
         :param verbose: if True, print some file i/o messages
         """
+        if overwrite:
+            try:
+                os.remove(filename)
+            except:
+                pass
+
+
         try:
             if not os.path.isfile(filename):  # if file doesn't exist, create it.
                 sys.stdout.flush()
