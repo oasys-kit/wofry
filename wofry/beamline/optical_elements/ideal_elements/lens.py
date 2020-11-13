@@ -25,6 +25,14 @@ class WOIdealLens(IdealLens, OpticalElementDecorator):
 
         return wavefront
 
+    def to_python_code(self):
+        txt  = ""
+        txt += "\nfrom wofry.beamline.optical_elements.ideal_elements.lens import WOIdealLens"
+        txt += "\n"
+        txt += "\noptical_element = WOIdealLens(name='%s',focal_x=%f,focal_y=%f)"%(self.get_name(),self.focal_x(),self.focal_y())
+        txt += "\n"
+        return txt
+
 class WOIdealLens1D(WOIdealLens):
     def __init__(self, name="Undefined", focal_length=1.0, plane='horizontal'):
         if plane == 'horizontal':
@@ -37,3 +45,11 @@ class WOIdealLens1D(WOIdealLens):
             raise Exception("invalid focusing plane: plane must be horizontal or vertical")
 
         WOIdealLens.__init__(self, name=name, focal_x=focal_length_x, focal_y=focal_length_y)
+
+    def to_python_code(self):
+        txt  = ""
+        txt += "\nfrom wofry.beamline.optical_elements.ideal_elements.lens import WOIdealLens1D"
+        txt += "\n"
+        txt += "\noptical_element = WOIdealLens1D(name='%s',focal_length=%f)"%(self.get_name(),self.focal_x())
+        txt += "\n"
+        return txt

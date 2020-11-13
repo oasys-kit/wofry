@@ -20,6 +20,23 @@ class WOBeamStopper(BeamStopper, OpticalElementDecorator):
 
         return wavefront
 
+    def to_python_code(self):
+        boundary_shape = self.get_boundary_shape()
+        txt = "\nfrom syned.beamline.shape import *"
+        if isinstance(boundary_shape, Rectangle):
+            txt += "\nboundary_shape=Rectangle(%g, %g, %g, %g)" % boundary_shape.get_boundaries()
+        elif isinstance(boundary_shape, Circle):
+            txt += "\nboundary_shape=Circle(%g, %g, %g)" % boundary_shape.get_boundaries()
+        elif isinstance(boundary_shape, Ellipse):
+            txt += "\nboundary_shape=Ellipse(%g, %g, %g, %g)" % boundary_shape.get_boundaries()
+        txt += "\n"
+        txt += "from wofry.beamline.optical_elements.absorbers.beam_stopper import WOBeamStopper"
+        txt += "\n"
+        txt += "optical_element = WOBeamStopper(boundary_shape=boundary_shape)"
+        txt += "\n"
+        return txt
+
+
 class WOBeamStopper1D(BeamStopper, OpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         BeamStopper.__init__(self, name=name, boundary_shape=boundary_shape)
@@ -34,5 +51,18 @@ class WOBeamStopper1D(BeamStopper, OpticalElementDecorator):
 
         return wavefront
 
+    def to_python_code(self):
+        boundary_shape = self.get_boundary_shape()
+        txt = "\nfrom syned.beamline.shape import *"
+        if isinstance(boundary_shape, Rectangle):
+            txt += "\nboundary_shape=Rectangle(%g, %g, %g, %g)" % boundary_shape.get_boundaries()
+        else:
+            txt += "\n# ERROR getting boundary shape..."
+        txt += "\n"
+        txt += "from wofry.beamline.optical_elements.absorbers.beam_stopper import WOBeamStopper1D"
+        txt += "\n"
+        txt += "optical_element = WOBeamStopper1D(boundary_shape=boundary_shape)"
+        txt += "\n"
+        return txt
 
 

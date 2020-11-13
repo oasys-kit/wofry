@@ -1,0 +1,54 @@
+1D
+==
+
+propagators_list = ["Fresnel",    "Fresnel (Convolution)",  "Fraunhofer",    "Integral",    "Fresnel Zoom",    "Fresnel Zoom Scaled"]
+class_name       = ["Fresnel1D",  "FresnelConvolution1D",   "Fraunhofer1D",  "Integral1D",  "FresnelZoom1D",   "FresnelZoomScaling1D"]
+handler_name     = ["FRESNEL_1D", "FRESNEL_CONVOLUTION_1D", "FRAUNHOFER_1D", "INTEGRAL_1D", "FRESNEL_ZOOM_1D", "FRESNEL_ZOOM_SCALING_1D"]
+
+2D
+==
+propagators_list = ["Fresnel",   "Fresnel (Convolution)",  "Fraunhofer",    "Integral",    "Fresnel Zoom XY"   ]
+class_name       = ["Fresnel2D", "FresnelConvolution2D",   "Fraunhofer2D",  "Integral2D",  "FresnelZoomXY2D"   ]
+handler_name     = ["FRESNEL_2D","FRESNEL_CONVOLUTION_2D", "FRAUNHOFER_2D", "INTEGRAL_2D", "FRESNEL_ZOOM_XY_2D"]
+
+
+
+
+
+
+
+class Fresnel1D(Propagator1D):
+HANDLER_NAME = "FRESNEL_1D"
+
+class FresnelConvolution1D(Propagator1D):
+HANDLER_NAME = "FRESNEL_CONVOLUTION_1D"
+
+class Fraunhofer1D(Propagator1D):
+HANDLER_NAME = "FRAUNHOFER_1D"
+
+class Integral1D(Propagator1D):
+HANDLER_NAME = "INTEGRAL_1D"
+
+class FresnelZoom1D(Propagator1D):
+HANDLER_NAME = "FRESNEL_ZOOM_1D"
+
+class FresnelZoomScaling1D(Propagator1D):
+HANDLER_NAME = "FRESNEL_ZOOM_SCALING_1D"
+
+
+class Fresnel2D(Propagator2D):
+HANDLER_NAME = "FRESNEL_2D"
+
+class FresnelConvolution2D(Propagator2D):
+HANDLER_NAME = "FRESNEL_CONVOLUTION_2D"
+
+class Fraunhofer2D(Propagator2D):
+HANDLER_NAME = "FRAUNHOFER_2D"
+
+class Integral2D(Propagator2D):
+HANDLER_NAME = "INTEGRAL_2D"
+
+class FresnelZoomXY2D(Propagator2D):
+HANDLER_NAME = "FRESNEL_ZOOM_XY_2D"
+
+

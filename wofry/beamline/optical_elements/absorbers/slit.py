@@ -3,6 +3,7 @@ import numpy
 
 from syned.beamline.optical_elements.absorbers.slit import Slit
 from syned.beamline.shape import BoundaryShape, Rectangle, Circle, Ellipse, MultiplePatch
+from syned.beamline.shape import DoubleRectangle, DoubleCircle, DoubleEllipse
 
 from wofry.beamline.decorators import OpticalElementDecorator
 
@@ -56,6 +57,32 @@ class WOSlit(Slit, OpticalElementDecorator):
 
         return wavefront
 
+    def to_python_code(self):
+        txt = ""
+        boundary_shape = self.get_boundary_shape()
+        txt += "\nfrom syned.beamline.shape import *"
+        if isinstance(boundary_shape, Rectangle):
+            txt += "\nboundary_shape=Rectangle(%g, %g, %g, %g)" % boundary_shape.get_boundaries()
+        elif isinstance(boundary_shape, Circle):
+            txt += "\nboundary_shape=Circle(%g, %g, %g)" % boundary_shape.get_boundaries()
+        elif isinstance(boundary_shape, Ellipse):
+            txt += "\nboundary_shape=Ellipse(%g, %g, %g, %g)" % boundary_shape.get_boundaries()
+
+        elif isinstance(boundary_shape, DoubleRectangle):
+            txt += "\nboundary_shape=DoubleRectangle(%g, %g, %g, %g, %g, %g, %g, %g)" % boundary_shape.get_boundaries()
+        elif isinstance(boundary_shape, DoubleCircle):
+            txt += "\nboundary_shape=DoubleCircle(%g, %g, %g, %g, %g, %g)" % boundary_shape.get_boundaries()
+        elif isinstance(boundary_shape, DoubleEllipse):
+            txt += "\nboundary_shape=DoubleEllipse(%g, %g, %g, %g, %g, %g, %g, %g)" % boundary_shape.get_boundaries()
+
+
+        txt += "\n"
+        txt += "from wofry.beamline.optical_elements.absorbers.slit import WOSlit"
+        txt += "\n"
+        txt += "optical_element = WOSlit(boundary_shape=boundary_shape)"
+        txt += "\n"
+        return txt
+
 class WOGaussianSlit(Slit, OpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
         Slit.__init__(self, name=name, boundary_shape=boundary_shape)
@@ -85,6 +112,21 @@ class WOSlit1D(Slit, OpticalElementDecorator):
             raise NotImplementedError("to be implemented")
 
         return wavefront
+
+    def to_python_code(self):
+        txt = ""
+        boundary_shape = self.get_boundary_shape()
+        txt += "\nfrom syned.beamline.shape import *"
+        if isinstance(boundary_shape, Rectangle):
+            txt += "\nboundary_shape=Rectangle(%g, %g, %g, %g)" % boundary_shape.get_boundaries()
+        else:
+            txt += "\n# ERROR retrieving boundary shape..."
+        txt += "\n"
+        txt += "from wofry.beamline.optical_elements.absorbers.slit import WOSlit1D"
+        txt += "\n"
+        txt += "optical_element = WOSlit1D(boundary_shape=boundary_shape)"
+        txt += "\n"
+        return txt
 
 class WOGaussianSlit1D(Slit, OpticalElementDecorator):
     def __init__(self, name="Undefined", boundary_shape=BoundaryShape()):
