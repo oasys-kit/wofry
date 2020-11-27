@@ -58,9 +58,9 @@ class GaussianSchellModel1D(object):
         return res
 
     def phi(self, n, x):
-        c_h_n = special.hermite(n)
         c = self.c()
-        h_n = np.polyval(c_h_n, x * np.sqrt(2*c) )
+
+        h_n = special.eval_hermite(n, x * np.sqrt(2*c))
 
         res = ((2*c/np.pi) ** 0.25) * np.exp(-c * x**2)
         res *= h_n * (1.0/np.sqrt(2**n * special.factorial(n) ))
@@ -130,30 +130,30 @@ if __name__ == "__main__":
     from srxraylib.plot.gol import plot,plot_image
     # 1D
     sigmaX = 100e-6
-    modeX = 0
+    modeX = 100
     a1D = GaussianSchellModel1D(1.0,sigmaX,100.0*sigmaX)
 
-    x = np.linspace(-5*sigmaX,5*sigmaX,100)
+    x = np.linspace(-30*sigmaX,30*sigmaX,1000)
     y = a1D.phi(modeX,x)
 
     plot(x,y)
 
     print(">>",y[30])
 
-    # 2D
-    sigmaX = 100e-6
-    modeX = 0
-    nX = 100
-    sigmaY = 50e-6
-    modeY = 3
-    nY = 100
-    a2D = GaussianSchellModel2D(1.0,sigmaX,100.0*sigmaX,sigmaY,100.0*sigmaY)
-
-    x = np.linspace(-5*sigmaX,5*sigmaX,nX)
-    y = np.linspace(-5*sigmaY,5*sigmaY,nY)
-
-    Phi = a2D.phi_nm(modeX,modeY,x,y)
-
-    print(">>",Phi[30,40])
-
-    plot_image(Phi)
+    # # 2D
+    # sigmaX = 100e-6
+    # modeX = 0
+    # nX = 100
+    # sigmaY = 50e-6
+    # modeY = 3
+    # nY = 100
+    # a2D = GaussianSchellModel2D(1.0,sigmaX,100.0*sigmaX,sigmaY,100.0*sigmaY)
+    #
+    # x = np.linspace(-5*sigmaX,5*sigmaX,nX)
+    # y = np.linspace(-5*sigmaY,5*sigmaY,nY)
+    #
+    # Phi = a2D.phi_nm(modeX,modeY,x,y)
+    #
+    # print(">>",Phi[30,40])
+    #
+    # plot_image(Phi)
