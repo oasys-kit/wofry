@@ -179,6 +179,9 @@ class GenericWavefront1D(Wavefront):
         else:
             return self.get_amplitude(polarization=polarization)**2
 
+    def get_integrated_intensity(self, polarization=Polarization.SIGMA):
+        return self.get_intensity(polarization=polarization).sum() * (self.get_abscissas()[1] - self.get_abscissas()[0])
+
     # interpolated values
 
     def get_interpolated_complex_amplitude(self, abscissa_value, polarization=Polarization.SIGMA): # singular

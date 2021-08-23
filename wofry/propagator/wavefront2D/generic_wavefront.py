@@ -179,18 +179,22 @@ class GenericWavefront2D(Wavefront):
         raise NotImplementedError("Not yet implemented!")
 
 
-    # TODO: polarization
+    # TODO: check polarization
     @classmethod
-    def combine_1D_wavefronts_into_2D(cls, wavefront_h, wavefront_v, normalize_to=0, wavelength=0.0):
-        if not wavelength > 0.0:
+    def combine_1D_wavefronts_into_2D(cls, wavefront_h, wavefront_v, normalize_to=0, wavelength=None, polarization=Polarization.SIGMA):
+        """
+        Create a 2D wavefront by doing the outer product of two 1D wavefront.
+
+        :param wavefront_h: horozontal wavefront
+        :param wavefront_v: vertical wavefront
+        :param normalize_to: 0=horizontal, 1=vertical, 2=One, 3=No normalization
+        :param wavelength: wavelength for combined wavefront. If None (default), use the average
+        :param polarization: build the 2D wavefront using 1D wavefront polarization 0=Sigma, 1=Pi, 2=Total
+        :return:
+        """
+        if wavelength is None:
             wavelength = (wavefront_h.get_wavelength() + wavefront_v.get_wavelength())/2
 
-        if normalize_to == 0:
-            normalization_factor = numpy.sqrt(numpy.sum(wavefront_h.get_intensity()))
-        elif normalize_to == 1:
-            normalization_factor = numpy.sqrt(numpy.sum(wavefront_v.get_intensity()))
-        else:
-            normalization_factor = 1.0
 
         wavefront_2D = GenericWavefront2D.initialize_wavefront_from_steps(x_start=wavefront_h.offset(),
                                                                           x_step=wavefront_h.delta(),
@@ -198,18 +202,30 @@ class GenericWavefront2D(Wavefront):
                                                                           y_step=wavefront_v.delta(),
                                                                           number_of_points=(wavefront_h.size(), wavefront_v.size()))
 
-        # complex_amplitude =  numpy.zeros((wavefront_h.size(), wavefront_v.size()), dtype=complex)
-        #
-        # for i in range (0, wavefront_h.size()):
-        #     for j in range (0, wavefront_v.size()):
-        #         complex_amplitude[i, j] = complex(wavefront_h.get_amplitude()[i]*wavefront_v.get_amplitude()[j],
-        #                                           wavefront_h.get_phase()[i] + wavefront_v.get_phase()[j])
 
-        complex_amplitude = numpy.outer(wavefront_h.get_complex_amplitude(), wavefront_v.get_complex_amplitude())
+        complex_amplitude = numpy.outer(wavefront_h.get_complex_amplitude(polarization=polarization),
+                                        wavefront_v.get_complex_amplitude(polarization=polarization))
 
-        normalization_factor /= numpy.sum(numpy.abs(complex_amplitude))
 
-        wavefront_2D.set_complex_amplitude(complex_amplitude * normalization_factor)
+        wavefront_2D.set_complex_amplitude(complex_amplitude)
+        wavefront_2D.set_wavelength(wavelength)
+
+
+        if normalize_to == 0:
+            wavefront_2D.rescale_amplitude(numpy.sqrt(wavefront_h.get_integrated_intensity(polarization=polarization) / \
+                                           wavefront_2D.get_integrated_intensity(polarization=polarization)), \
+                                           polarization=polarization)
+        elif normalize_to == 1:
+            wavefront_2D.rescale_amplitude(numpy.sqrt(wavefront_v.get_integrated_intensity(polarization=polarization) / \
+                                           wavefront_2D.get_integrated_intensity(polarization=polarization)),
+                                           polarization=polarization)
+        elif normalize_to == 2: # One
+            wavefront_2D.rescale_amplitude(numpy.sqrt(1.0/wavefront_2D.get_integrated_intensity(polarization=polarization)), \
+                                           polarization=polarization)
+        elif normalize_to == 3: # None
+            pass
+
+
 
         return wavefront_2D
 
