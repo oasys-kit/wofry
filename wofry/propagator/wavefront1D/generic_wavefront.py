@@ -97,12 +97,12 @@ class GenericWavefront1D(Wavefront):
 
         sA = ScaledArray.initialize_from_steps(np_array=y_array,
                                                initial_scale_value=x_array[0],
-                                               scale_step=numpy.abs(x_array[1]-x_array[0]))
+                                               scale_step=(x_array[1]-x_array[0]))
 
         if y_array_pi is not None:
             sA_pi = ScaledArray.initialize_from_steps(np_array=y_array_pi,
                                                    initial_scale_value=x_array[0],
-                                                   scale_step=numpy.abs(x_array[1]-x_array[0]))
+                                                   scale_step=(x_array[1]-x_array[0]))
         else:
             sA_pi = None
 
@@ -635,4 +635,10 @@ if __name__ == "__main__":
     # w.save_h5_file("/tmp/wf.h5",subgroupname="wfr",intensity=True,phase=False,overwrite=True,verbose=True)
     # w2 = GenericWavefront1D.load_h5_file("/tmp/wf.h5",filepath="wfr")
     # assert(w2.is_identical(w))
-    pass
+    x = numpy.linspace(100e-6, -100e-6, 100)
+    y = numpy.exp( -(x-50e-6)**2 / 2 / (10e-6)**2 )
+    wfr = GenericWavefront1D.initialize_wavefront_from_arrays(x, numpy.sqrt(y) + 0j)
+    from srxraylib.plot.gol import plot
+    plot(1e6 * x,y,
+         1e6 * wfr.get_abscissas(), wfr.get_intensity(),
+         legend=["original", "wfr"])
