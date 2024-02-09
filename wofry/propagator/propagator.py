@@ -66,10 +66,11 @@ class PropagationElements(object):
 class PropagationParameters(object):
     def __init__(self,
                  wavefront = Wavefront(),
-                 propagation_elements = PropagationElements()):
+                 propagation_elements = PropagationElements(),
+                 **additional_parameters):
         self._wavefront = wavefront
         self._propagation_elements = propagation_elements
-        self._additional_parameters = None
+        self._additional_parameters = additional_parameters
 
     def get_wavefront(self):
         return self._wavefront
