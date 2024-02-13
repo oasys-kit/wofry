@@ -11,7 +11,7 @@ except AttributeError:
 
 NAME = 'wofry'
 
-VERSION = '1.0.32'
+VERSION = '1.0.33'
 ISRELEASED = True
 
 DESCRIPTION = 'WOFRY (Wave Optics FRamework in pYthon) kernel library'
