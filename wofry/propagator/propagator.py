@@ -160,7 +160,7 @@ class PropagationManager(object):
 
         for existing in propagation_chain_of_responsibility:
             if existing.is_handler(propagator.get_handler_name()):
-                raise ValueError("Propagator already in the Chain")
+                raise ValueError(f"Propagator {propagator.get_handler_name()} already in the Chain")
 
         propagation_chain_of_responsibility.append(propagator)
 
