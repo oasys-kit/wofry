@@ -10,12 +10,7 @@ from wofry.propagator.util.gaussian_schell_model import GaussianSchellModel2D
 
 import copy
 
-
 from wofry.propagator.polarization import Polarization
-# class Polarization:
-#     SIGMA = 0
-#     PI = 1
-#     TOTAL = 3
 
 # needed for h5 i/o
 import os
@@ -916,4 +911,7 @@ if __name__ == "__main__":
     w.save_h5_file("/tmp/wf.h5",subgroupname="wfr",intensity=True,phase=False,overwrite=True,verbose=True)
     w2 = GenericWavefront2D.load_h5_file("/tmp/wf.h5",filepath="wfr")
     assert(w2.is_identical(w))
-    pass
+
+    w2 = GenericWavefront2D.from_hex_tring(w.to_hex_tring())
+
+    assert(w2.is_identical(w))

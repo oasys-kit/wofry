@@ -1,4 +1,6 @@
 
+import pickle
+
 class Wavefront(object):
 
     def __init__(self):
@@ -9,6 +11,14 @@ class Wavefront(object):
 
     def duplicate(self):
         raise NotImplementedError("method is abstract")
+
+    def to_hex_tring(self):
+        return pickle.dumps(self).hex()
+
+    @classmethod
+    def from_hex_tring(cls, hex_string):
+        return pickle.loads(bytes.fromhex(hex_string))
+
 
 class WavefrontDimension:
     ONE = "1"
