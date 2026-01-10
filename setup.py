@@ -37,7 +37,6 @@ CLASSIFIERS = [
     'Environment :: Console',
     'Environment :: Plugins',
     'Programming Language :: Python :: 3',
-    'License :: OSI Approved :: '
     'GNU General Public License v3 or later (GPLv3+)',
     'Operating System :: POSIX',
     'Operating System :: Microsoft :: Windows',
@@ -52,10 +51,6 @@ INSTALL_REQUIRES = (
     'syned>=1.0.26',
     'h5py',
     'srxraylib>=1.0.46'
-)
-
-SETUP_REQUIRES = (
-    'setuptools',
 )
 
 PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
@@ -82,7 +77,6 @@ def setup_package():
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
         install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
     )
 
 if __name__ == '__main__':
