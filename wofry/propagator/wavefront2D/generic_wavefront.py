@@ -1,17 +1,7 @@
 import numpy
-import scipy.constants as codata
-
-from srxraylib.util.data_structures import ScaledMatrix, ScaledArray
-
-from wofry.propagator.wavefront import Wavefront, WavefrontDimension
-from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
-
-from wofry.propagator.util.gaussian_schell_model import GaussianSchellModel2D
-
 import copy
-
-from wofry.propagator.polarization import Polarization
-
+import scipy.constants as codata
+from skimage.restoration import unwrap_phase
 # needed for h5 i/o
 import os
 import sys
@@ -20,17 +10,20 @@ try:
     import h5py
 except:
     raise ImportError("h5py not available: input/output to files not working")
+
+from srxraylib.util.data_structures import ScaledMatrix, ScaledArray
+
+from wofry.propagator.wavefront import Wavefront, WavefrontDimension
+from wofry.propagator.wavefront1D.generic_wavefront import GenericWavefront1D
+from wofry.propagator.util.gaussian_schell_model import GaussianSchellModel2D
+from wofry.propagator.polarization import Polarization
+
 # --------------------------------------------------
 # Wavefront 2D
 # --------------------------------------------------
-
-
-
-
 class GenericWavefront2D(Wavefront):
     XX = 0
     YY = 1
-
 
     def __init__(self, wavelength=1e-10, electric_field_matrix=None, electric_field_matrix_pi=None):
         self._wavelength = wavelength
@@ -315,7 +308,7 @@ class GenericWavefront2D(Wavefront):
     def get_amplitude(self, polarization=Polarization.SIGMA):
         return numpy.absolute(self.get_complex_amplitude(polarization=polarization))
 
-    def get_phase(self,from_minimum_intensity=0.0,unwrap=0, polarization=Polarization.SIGMA):
+    def get_phase(self, from_minimum_intensity=0.0, unwrap=0, polarization=Polarization.SIGMA):
 
         """
 
@@ -327,6 +320,7 @@ class GenericWavefront2D(Wavefront):
             2: Unwrap only in Vertical axis.
             3: Unwrap first in H, then in V.
             4: Unwrap first in V, then in H.
+            5: Unwrap using scikit (unwrap_phase).
         :param polarization: 0=Sigma, 1=Pi
         :return: the phase in a numpy array
         """
@@ -348,6 +342,8 @@ class GenericWavefront2D(Wavefront):
                 phase = numpy.unwrap(numpy.unwrap(phase,axis=0),axis=1)
             elif unwrap == 4: # y and x
                 phase = numpy.unwrap(numpy.unwrap(phase,axis=1),axis=0)
+            elif unwrap == 5:
+                phase = unwrap_phase(phase)
             else:
                 raise Exception(NotImplemented)
 
@@ -908,10 +904,15 @@ class GenericWavefront2D(Wavefront):
 
 if __name__ == "__main__":
     w = GenericWavefront2D.initialize_wavefront_from_steps(polarization=Polarization.TOTAL)
-    w.save_h5_file("/tmp/wf.h5",subgroupname="wfr",intensity=True,phase=False,overwrite=True,verbose=True)
-    w2 = GenericWavefront2D.load_h5_file("/tmp/wf.h5",filepath="wfr")
-    assert(w2.is_identical(w))
+
+    # w.save_h5_file("wf.h5",subgroupname="wfr",intensity=True,phase=False,overwrite=True,verbose=True)
+    # w2 = GenericWavefront2D.load_h5_file("wf.h5",filepath="wfr")
+    # assert(w2.is_identical(w))
 
     w2 = GenericWavefront2D.from_hex_tring(w.to_hex_tring())
-
     assert(w2.is_identical(w))
+
+    ph0 = w.get_phase(from_minimum_intensity=0.0, unwrap=0, polarization=Polarization.SIGMA)
+    ph4 = w.get_phase(from_minimum_intensity=0.0, unwrap=4, polarization=Polarization.SIGMA)
+    ph5 = w.get_phase(from_minimum_intensity=0.0, unwrap=5, polarization=Polarization.SIGMA)
+    print(ph0, ph4, ph5)

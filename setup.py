@@ -11,7 +11,7 @@ except AttributeError:
 
 NAME = 'wofry'
 
-VERSION = '1.0.34'
+VERSION = '1.0.35'
 ISRELEASED = True
 
 DESCRIPTION = 'WOFRY (Wave Optics FRamework in pYthon) kernel library'
@@ -49,7 +49,8 @@ CLASSIFIERS = [
 INSTALL_REQUIRES = (
     'syned>=1.0.26',
     'h5py',
-    'srxraylib>=1.0.46'
+    'srxraylib>=1.0.46',
+    'scikit-image',
 )
 
 PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
