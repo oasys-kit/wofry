@@ -32,9 +32,11 @@ Quick installation
 References
 ----------
 
-[1] M. Sanchez del Rio, L. Rebuffi,
-"OASYS: A software for beamline simulations and synchrotron virtual experiments",
-Proc. SPIE 10388, 1038808 (2017).
+[1] L. Rebuffi, M. Sanchez del Rio
+"Interoperability and complementarity of simulation tools for beamline design in the OASYS environment",
+Proc. SPIE 10388, Advances in Computational Methods for X-Ray Optics IV, 1038808 (23 August 2017)
 https://doi.org/10.1117/12.2274232
 
-[2] https://doi.org/10.48550/arXiv.2410.01338
+[2] Manuel Sanchez del Rio, Juan Reyes-Herrera, Rafael Celestre, Luca Rebuffi
+"WOFRY: a package for partially coherent beamline simulations in fourth-generation storage rings"
+https://doi.org/10.48550/arXiv.2410.01338
