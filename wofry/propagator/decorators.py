@@ -1,3 +1,6 @@
+"""
+Abstract decorator classes for wofry wavefront propagators.
+"""
 
 class WavefrontDecorator():
 

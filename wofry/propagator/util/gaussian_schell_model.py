@@ -1,3 +1,6 @@
+"""
+Gaussian-Schell model for partially coherent beams (1D and 2D).
+"""
 import numpy as np
 import scipy.special as special
 

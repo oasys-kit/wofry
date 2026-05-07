@@ -1,3 +1,6 @@
+__pycache__/
+*.py[cod]
+
 /wofry/version.py
 /wofry.egg-info/
 /dist/

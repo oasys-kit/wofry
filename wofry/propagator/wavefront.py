@@ -1,3 +1,6 @@
+"""
+Abstract base classes for wofry wavefronts (Wavefront, WavefrontDimension).
+"""
 
 import pickle
 

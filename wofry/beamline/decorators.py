@@ -1,3 +1,6 @@
+"""
+Abstract decorator classes for wofry beamline light sources and optical elements.
+"""
 
 from wofry.propagator.wavefront import Wavefront
 

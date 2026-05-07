@@ -1,3 +1,6 @@
+"""
+2D generic wavefront: complex amplitude on a scaled matrix with propagation utilities.
+"""
 import numpy
 import copy
 import scipy.constants as codata

@@ -1,3 +1,6 @@
+"""
+Core wofry propagator infrastructure: Propagator, PropagationManager, and PropagationParameters.
+"""
 from srxraylib.util.threading import Singleton, synchronized_method
 
 from syned.beamline.beamline_element import BeamlineElement
