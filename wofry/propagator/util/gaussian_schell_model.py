@@ -5,28 +5,78 @@ import numpy as np
 import scipy.special as special
 
 class GaussianSchellModel1D(object):
+    """
+    1-D Gaussian-Schell model for a partially coherent beam.
+
+    Implements the cross-spectral density W(x1, x2) = sqrt(S(x1)) sqrt(S(x2)) g(x1-x2)
+    following Mandel and Wolf, *Optical Coherence and Quantum Optics*, p. 253.
+    """
+
     def __init__(self, A, sigma_s, sigma_g):
         """
-        Mandel and Wolf p 253
-
-        :param A: Amplitude of the spectral density S
-        :param sigma_s: Gaussian width of the spectral density S
-        :param sigma_g: Gaussian width of spectral degree of coherence g
+        Parameters
+        ----------
+        A : float
+            Amplitude of the spectral density S.
+        sigma_s : float
+            RMS width of the spectral density S [m].
+        sigma_g : float
+            RMS width of the spectral degree of coherence g [m].
         """
         self._A = A
         self._sigma_s = sigma_s
         self._sigma_g = sigma_g
 
     def S(self, x):
+        """
+        Spectral density (intensity profile).
+
+        Parameters
+        ----------
+        x : array_like
+            Transverse coordinate [m].
+
+        Returns
+        -------
+        numpy.ndarray
+            S(x) = A^2 exp(-x^2 / (2 sigma_s^2)).
+        """
         S = (self._A ** 2) * np.exp(-(x**2)/(2*self._sigma_s**2))
         return S
 
     def g(self, x):
+        """
+        Spectral degree of coherence.
+
+        Parameters
+        ----------
+        x : array_like
+            Coordinate difference x1 - x2 [m].
+
+        Returns
+        -------
+        numpy.ndarray
+            g(x) = exp(-x^2 / (2 sigma_g^2)).
+        """
         g = np.exp(-(x**2)/(2*self._sigma_g**2))
         return g
 
     def evaluate(self, x_1, x_2):
+        """
+        Evaluate the cross-spectral density W(x1, x2).
 
+        Parameters
+        ----------
+        x_1 : array_like
+            First transverse coordinate [m].
+        x_2 : array_like
+            Second transverse coordinate [m].
+
+        Returns
+        -------
+        numpy.ndarray
+            W(x1, x2) = sqrt(S(x1)) sqrt(S(x2)) g(x1-x2).
+        """
         dr = x_1-x_2
 
         S_1 = self.S(x_1)
@@ -38,14 +88,35 @@ class GaussianSchellModel1D(object):
         return result
 
     def a(self):
+        """
+        Auxiliary parameter a = 1 / (4 sigma_s^2).
+
+        Returns
+        -------
+        float
+        """
         a = 1.0/(4.0*self._sigma_s**2)
         return a
 
     def b(self):
+        """
+        Auxiliary parameter b = 1 / (2 sigma_g^2).
+
+        Returns
+        -------
+        float
+        """
         b = 1.0/(2.0*self._sigma_g**2)
         return b
 
     def c(self):
+        """
+        Auxiliary parameter c = sqrt(a^2 + 2ab).
+
+        Returns
+        -------
+        float
+        """
         a = self.a()
         b = self.b()
 
@@ -53,6 +124,19 @@ class GaussianSchellModel1D(object):
         return res
 
     def beta(self,n):
+        """
+        Eigenvalue of the n-th coherent mode.
+
+        Parameters
+        ----------
+        n : int
+            Mode order (0 = fundamental).
+
+        Returns
+        -------
+        float
+            beta_n = A^2 sqrt(pi/(a+b+c)) * (b/(a+b+c))^n.
+        """
         a = self.a()
         b = self.b()
         c = self.c()
@@ -61,6 +145,21 @@ class GaussianSchellModel1D(object):
         return res
 
     def phi(self, n, x):
+        """
+        n-th coherent-mode eigenfunction (normalised Hermite-Gaussian).
+
+        Parameters
+        ----------
+        n : int
+            Mode order.
+        x : array_like
+            Transverse coordinate [m].
+
+        Returns
+        -------
+        numpy.ndarray
+            phi_n(x).
+        """
         c = self.c()
 
         h_n = special.eval_hermite(n, x * np.sqrt(2*c))
@@ -71,15 +170,29 @@ class GaussianSchellModel1D(object):
         return res
 
 class GaussianSchellModel2D(object):
+    """
+    2-D Gaussian-Schell model for a partially coherent beam.
+
+    Separable product of two independent :class:`GaussianSchellModel1D`
+    instances (one per transverse axis), following Mandel and Wolf,
+    *Optical Coherence and Quantum Optics*, p. 253.
+    """
+
     def __init__(self, A, sigma_s_x, sigma_g_x, sigma_s_y, sigma_g_y):
         """
-        Mandel and Wolf p 253
-
-        :param A: Amplitude of the spectral density S
-        :param sigma_s: Gaussian width of the spectral density S
-        :param sigma_g: Gaussian width of spectral degree of coherence g
+        Parameters
+        ----------
+        A : float
+            Overall amplitude of the spectral density S.
+        sigma_s_x : float
+            RMS beam size in x [m].
+        sigma_g_x : float
+            RMS coherence width in x [m].
+        sigma_s_y : float
+            RMS beam size in y [m].
+        sigma_g_y : float
+            RMS coherence width in y [m].
         """
-
         self._mode_x = GaussianSchellModel1D(A**0.5, sigma_s_x, sigma_g_x)
         self._mode_y = GaussianSchellModel1D(A**0.5, sigma_s_y, sigma_g_y)
 
@@ -87,6 +200,21 @@ class GaussianSchellModel2D(object):
         self._sorted_mode_indices = None
 
     def evaluate(self, r_1, r_2):
+        """
+        Evaluate the 2-D cross-spectral density W(r1, r2).
+
+        Parameters
+        ----------
+        r_1 : array_like, shape (2,)
+            First position vector [x1, y1] in metres.
+        r_2 : array_like, shape (2,)
+            Second position vector [x2, y2] in metres.
+
+        Returns
+        -------
+        float or numpy.ndarray
+            W(r1, r2) = W_x(x1, x2) * W_y(y1, y2).
+        """
         x = self._mode_x.evaluate(r_1[0], r_2[0])
         y = self._mode_y.evaluate(r_1[1], r_2[1])
 
@@ -95,6 +223,21 @@ class GaussianSchellModel2D(object):
         return result
 
     def beta(self, n_x, n_y):
+        """
+        Eigenvalue of the (n_x, n_y) coherent mode.
+
+        Parameters
+        ----------
+        n_x : int
+            Mode order in x.
+        n_y : int
+            Mode order in y.
+
+        Returns
+        -------
+        float
+            beta(n_x, n_y) = beta_x(n_x) * beta_y(n_y).
+        """
         beta_x = self._mode_x.beta(n_x)
         beta_y = self._mode_y.beta(n_y)
 
@@ -103,6 +246,25 @@ class GaussianSchellModel2D(object):
         return res
 
     def phi(self, n_x, n_y, x, y):
+        """
+        (n_x, n_y) coherent-mode eigenfunction evaluated at scalar coordinates.
+
+        Parameters
+        ----------
+        n_x : int
+            Mode order in x.
+        n_y : int
+            Mode order in y.
+        x : float or array_like
+            x coordinate [m].
+        y : float or array_like
+            y coordinate [m].
+
+        Returns
+        -------
+        numpy.ndarray
+            phi(n_x, n_y, x, y) = phi_x(n_x, x) * phi_y(n_y, y).
+        """
         phi_x = self._mode_x.phi(n_x, x)
         phi_y = self._mode_y.phi(n_y, y)
 
@@ -111,6 +273,25 @@ class GaussianSchellModel2D(object):
         return res
 
     def phi_nm(self,n_x, n_y, x_coords, y_coords):
+        """
+        (n_x, n_y) coherent-mode eigenfunction on a 2-D grid (outer product).
+
+        Parameters
+        ----------
+        n_x : int
+            Mode order in x.
+        n_y : int
+            Mode order in y.
+        x_coords : array_like, shape (Nx,)
+            x coordinates [m].
+        y_coords : array_like, shape (Ny,)
+            y coordinates [m].
+
+        Returns
+        -------
+        numpy.ndarray, shape (Nx, Ny)
+            phi_nm = outer(phi_x(n_x, x_coords), phi_y(n_y, y_coords)).
+        """
         phi_x = self._mode_x.phi(n_x, x_coords)
         phi_y = self._mode_y.phi(n_y, y_coords)
 
@@ -118,6 +299,25 @@ class GaussianSchellModel2D(object):
         return res
 
     def sortedModeIndices(self, index_energy, n_points=50):
+        """
+        Return mode indices (n, m) sorted by descending eigenvalue.
+
+        The sorted list is computed once and cached.
+
+        Parameters
+        ----------
+        index_energy : int
+            Rank of the desired mode (0 = highest eigenvalue).
+        n_points : int, optional
+            Number of mode orders to consider in each direction. Default 50.
+
+        Returns
+        -------
+        n : int
+            x-mode order of the requested ranked mode.
+        m : int
+            y-mode order of the requested ranked mode.
+        """
         if self._sorted_mode_indices is None:
             eigenvalues_x = np.array([self._mode_x.beta(i) for i in range(n_points)])
             eigenvalues_y = np.array([self._mode_y.beta(i) for i in range(n_points)])
