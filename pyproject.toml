@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wofry"
+version = "1.0.36"
+description = "WOFRY (Wave Optics FRamework in pYthon) kernel library"
+readme = "README.md"
+
+# TODO: confirm the exact GPL variant, and check the repo's LICENSE file matches.
+# See chat notes -- the sibling package `syned` declared GPLv3 while shipping an
+# MIT LICENSE file, so this is worth verifying rather than assuming.
+license = "GPL-3.0-or-later"
+# license-files = ["LICENSE"]   # <- uncomment if a LICENSE file exists in the repo
+
+authors = [
+    { name = "Manuel Sanchez del Rio" },
+    { name = "Luca Rebuffi", email = "lrebuffi@anl.gov" },
+]
+maintainers = [
+    { name = "Luca Rebuffi", email = "lrebuffi@anl.gov" },
+]
+keywords = [
+    "dictionary",
+    "glossary",
+    "synchrotron",
+    "simulation",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: Plugins",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "syned>=1.0.26",
+    "h5py",
+    "srxraylib>=1.0.46",
+    "scikit-image",
+]
+
+[project.urls]
+Homepage = "https://github.com/oasys-kit/wofry"
+Download = "https://github.com/oasys-kit/wofry"
+Documentation = "https://wofry.readthedocs.io/"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.packages.find]
+exclude = ["*.tests", "*.tests.*", "tests.*", "tests"]
